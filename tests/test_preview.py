@@ -3,7 +3,7 @@ from nature_video_studio.preview import fetch_poster, host_allowed
 
 
 class MockResponse:
-    def __init__(self, status=200, content=b"\\xff\\xd8xyz", content_type="image/jpeg", **headers):
+    def __init__(self, status=200, content=bytes.fromhex("ffd8") + b"xyz", content_type="image/jpeg", **headers):
         self.status_code = status
         self.headers = {"Content-Type": content_type, **headers}
         self.content = content
@@ -39,7 +39,7 @@ def test_poster_success_and_cache(tmp_path):
     s=MockSession([MockResponse()])
     one=fetch_poster(url,"Pexels",tmp_path,s)
     assert one.code == "OK"
-    assert one.path and one.path.read_bytes().startswith(b"\\xff\\xd8")
+    assert one.path and one.path.read_bytes().startswith(bytes.fromhex("ffd8"))
     again=fetch_poster(url,"Pexels",tmp_path,s)
     assert again.from_cache
     assert s.calls == 1

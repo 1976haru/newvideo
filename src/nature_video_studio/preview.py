@@ -91,9 +91,9 @@ def fetch_poster(url: str, provider: str, cache_dir: Path, session=None) -> Prev
                     data.extend(chunk)
                 if not data:
                     return PreviewResult(None, "PREVIEW_EMPTY", "서버에서 빈 이미지를 받았습니다.")
-                if media_type == "image/jpeg" and not bytes(data).startswith(b"\\xff\\xd8"):
+                if media_type == "image/jpeg" and not bytes(data).startswith(bytes.fromhex("ffd8")):
                     return PreviewResult(None, "PREVIEW_INVALID_IMAGE", "JPEG 데이터가 올바르지 않습니다.")
-                if media_type == "image/png" and not bytes(data).startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+                if media_type == "image/png" and not bytes(data).startswith(bytes.fromhex("89504e470d0a1a0a")):
                     return PreviewResult(None, "PREVIEW_INVALID_IMAGE", "PNG 데이터가 올바르지 않습니다.")
                 if media_type == "image/webp" and not (bytes(data).startswith(b"RIFF") and bytes(data)[8:12] == b"WEBP"):
                     return PreviewResult(None, "PREVIEW_INVALID_IMAGE", "WebP 데이터가 올바르지 않습니다.")
