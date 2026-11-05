@@ -17,14 +17,14 @@
 
 ```powershell
 $script = "$env:TEMP\NVS_C011_Run_V2_Trial.ps1"
-$url = "https://raw.githubusercontent.com/1976haru/newvideo/ff6aeacf1cce27259ae5cd5dacc1a9a5e8b46426/tools/C011_Run_V2_Trial.ps1"
+$url = "https://raw.githubusercontent.com/1976haru/newvideo/de7f3d1135f3aec1b8db570b7bd041992ab3d186/tools/C011_Run_V2_Trial.ps1"
 Invoke-WebRequest -Uri $url -OutFile $script -UseBasicParsing
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
 ```
 
 - 기존 V1 실행 폴더: `D:\03 자연풍경 비디오\NatureVideoStudio_V1_0_2`. 원본 V1.0.2에 손대지 않음.
-- 새로 생성할 V2 전용 경로: `D:\NVS_V2_Trial_App\C011_Titlebar_7e099230`. 기존 경로가 있으면 안전하게 중단(덮어쓰기 없음).
-- 스크립트는 GitHub에 고정된 `7e0992305b64ad71515d35be72c1f509d63ea1b8` 소스를 다운로드하여 새로운 가상환경에 PySide6를 설치함. 인터넷 연결 및 사용자 PC에 Python `py -3`가 있어야 함. **실행형 EXE가 아닌 개발용 시범 창**임.
+- 새로 생성할 V2 전용 경로: `D:\NVS_V2_Trial_App\C011_Titlebar_10206483`. 기존 경로가 있으면 안전하게 중단(덮어쓰기 없음).
+- 스크립트는 GitHub에 고정된 `10206483d704af57e3c13df2b58b4e1548f66163` 소스를 다운로드하여 새로운 가상환경에 PySide6를 설치함. 인터넷 연결 및 사용자 PC에 Python `py -3`가 있어야 함. **실행형 EXE가 아닌 개발용 시범 창**임.
 - GUI가 열리면 **Windows 제목 표시줄 전체와 내부 시험판 문구가 보이게** 캡처. 기존 V1 실행창 제목도 별도 캡처. V1 키/계정/개인 폴더 등이 화면에 노출되면 가림 처리.
 - 설치·실행 실패 시 기존 V1을 수정하거나 API 키를 재입력하지 말 것. 오류만 공유해 재검증.
 - 타이틀에 V2 버전/시험판 여부가 정확히 보이고 V1과 혼동되지 않을 때만 C011 **1/1 PASS**. V1 타이틀이 버전을 표시하지 않는다면 그 사실을 증거로 남기고 V1 수정 없이 호환 가능한 표기 전략을 새로 설계해야 함.
