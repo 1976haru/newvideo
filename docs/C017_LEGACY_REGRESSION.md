@@ -44,3 +44,26 @@ Pytest uses in-memory fake sessions and `tmp_path`; no live network calls, crede
 ## Test-status reporting
 
 CI source code and exact output are recorded after the latest workflow completes. Do not claim an in-progress run is PASS. Main remains unchanged, feature branch and Draft PR #1 are preserved.
+
+## GitHub Actions real CI evidence — 2026-11-06
+
+Code SHA: `e88b138c71c7d2c42eaf5ee0625985704c8306e7`; [CI run 42123984605](https://github.com/1976haru/newvideo/actions/runs/42123984605).
+
+All six jobs completed **SUCCESS**:
+- Windows / Ubuntu, Python 3.11 and 3.12: PASS.
+- Windows C011 Qt titlebar smoke: PASS.
+- Windows C005 PowerShell nonmutation fixtures: PASS.
+
+Windows Python 3.11 job log reports:
+```text
+python -m pytest -q -k migration_and_preservation
+26 passed, 151 deselected
+
+python -m pytest -q tests/test_legacy_regression.py
+26 passed
+
+python -m pytest -q
+176 passed, 1 skipped
+```
+
+These numbers are for the synthetic fixture and full suite, not a fresh V1.0.2 live GUI reproduction. No actual external API/codec capture was performed. The later documentation-only commit does not change executable test logic.
