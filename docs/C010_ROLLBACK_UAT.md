@@ -25,7 +25,7 @@
 
 ```powershell
 $c010 = "$env:TEMP\NVS_C010_rollback.py"
-$url = "https://raw.githubusercontent.com/1976haru/newvideo/<PINNED_COMMIT>/tools/audit_c010_rollback.py"
+$url = "https://raw.githubusercontent.com/1976haru/newvideo/99e3a1347cda7163eafe3599583fdb29ba79ff46/tools/audit_c010_rollback.py"
 Invoke-WebRequest -Uri $url -OutFile $c010 -UseBasicParsing
 py -3 "$c010"
 ```
