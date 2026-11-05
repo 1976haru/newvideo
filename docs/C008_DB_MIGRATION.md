@@ -47,3 +47,5 @@ Tests include 0-row actual-shape V1 fixture, nonempty metadata preservation, Kor
 - production startup gate integration, including detection of abandoned journals.
 
 Do not run migration against a user's real D: drive until those gates are verified and the user consents. C008 is a schema/strategy + synthetic tests milestone, not a claim that user data was transferred.
+
+- Crash while restoring the old V2 snapshot is tracked as ROLLING_BACK and must BLOCK V2 startup pending manual hash-verified recovery; the rollback routine does not silently restart or discard the quarantined copy.
