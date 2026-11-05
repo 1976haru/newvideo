@@ -9,6 +9,7 @@ Safe constraints:
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 from datetime import datetime
 import hashlib
 import json
@@ -76,10 +77,10 @@ def backup_library(source: Path, backup_folder: Path) -> dict:
 
     source_uri = source.as_uri() + "?mode=ro"
     try:
-        with sqlite3.connect(source_uri, uri=True, timeout=10) as original:
+        with closing(sqlite3.connect(source_uri, uri=True, timeout=10)) as original:
             original.execute("PRAGMA query_only = ON")
             # This is an online, SQLite-consistent backup even when journal mode differs.
-            with sqlite3.connect(temporary, timeout=10) as copy:
+            with closing(sqlite3.connect(temporary, timeout=10)) as copy:
                 original.backup(copy, pages=128, sleep=0.1)
                 check = [row[0] for row in copy.execute("PRAGMA integrity_check").fetchall()]
                 if check != ["ok"]:
