@@ -63,3 +63,47 @@ C009_BEFORE_BASELINE_SAVED
 The `DEFAULT_CANDIDATE` root is confirmed as the current inferred default, **not** evidence that QSettings explicitly stored this path. Credential presence is not proof API authentication/validity; the script read keys from Windows keyring in process memory and retained/printed only boolean presence. No secret values received in the transcript.
 
 **Next evidence needed:** user launches V1 GUI and verifies masked keys and displayed path without changing settings; closes V1; runs `py -3 "$work" after`; reports masked AFTER output. Even a successful V1 BEFORE/AFTER cannot pass the full C009 V1→V2 restore gate until a runnable V2 GUI reuses keys without reentry and V1 data remains intact.
+
+## Actual user Windows AFTER evidence — 2026-11-06
+
+**Result: V1 before/after restoration baseline PASS, C009 entire V1→V2 gate still PENDING.** The user ran:
+
+```powershell
+py -3 "$work" after
+```
+
+Actual masked output:
+
+```text
+===== C009 MASKED RESTORE AUDIT =====
+APP_FOLDER_EXISTS: True
+LAUNCHER_EXISTS: True
+ROOT_SOURCE: DEFAULT_CANDIDATE
+ROOT: D:\NatureVideoStudio
+ROOT_EXISTS: True
+DB_EXISTS: True
+DB_SHA256: 4D2BDC3567A6FA7CFA1577DCB42D3A582551B5F972AA55057BEB0EA7654E7973
+C002_ZIP_SHA256_MATCH: True
+C004_DB_BACKUP_SHA256_MATCH: True
+KEYRING_CHECK: CHECKED_MASKED
+KEY_PEXELS: PRESENT
+KEY_PIXABAY: PRESENT
+SECRET_VALUES_PRINTED: False
+ROOT=MATCH
+DB_SHA256=MATCH
+KEY_IDENTIFIERS=MATCH
+KEY_STATUS=MATCH
+RECOVERY_BACKUPS=MATCH
+C009_V1_RESTORE_BASELINE_PASS
+===== C009 REPORT END =====
+```
+
+**Interpretation:**
+- Both named providers remained PRESENT; account identifiers, recorded data root, database SHA256, and recovery artifact SHA256 all MATCH before/after.
+- Diagnostic output did not include secret values; the Windows script reported only boolean presence after accessing the OS keyring in memory.
+- `ROOT_SOURCE=DEFAULT_CANDIDATE` is inferred default, not a registry-saved path.
+- The AFTER console output alone does **not** prove independently that the V1 GUI was actually launched, what it displayed, or whether a provider API request succeeded; capture masked GUI evidence when available.
+- V2 has no runnable GUI/executable yet. No evidence of V2 no-reentry credential reuse or V1/V2 parallel startup. Consequently **do not mark C009 final 3/3 or full PASS**. Progress accounting may award 1/3 provisional for completed V1 before/after masked baseline only, pending full release acceptance.
+- No V1 database, archive, key or backup was modified by this tool. No migration or media download was performed.
+
+Remaining: real masked GUI screenshot/path check, V2 side-by-side start and read-through key access, legitimate provider request, negative log redaction checks, original DB SHA preservation after V2 exercise.
