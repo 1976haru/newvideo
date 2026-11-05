@@ -49,3 +49,17 @@ C005_NO_MEDIA_FOUND_IN_SCANNED_FOLDERS
 Interpretation: supported video extensions in these two roots were not found. Do not infer that all user video files are absent elsewhere. There is nothing to copy or hash-compare in these two roots, so copying is not needed and backup verification is not applicable there. C004 separately recorded downloads table at 0 rows. **No video backup was created, and no global absence claim has been made.**
 
 Before marking C005 wholly complete, confirm whether other user-managed nature video folders exist; if yes, audit them as additional explicit scan roots and perform opt-in, capacity-checked copy-only backup. If not, mark C005 `완료 (대상 없음/N/A)` with this evidence. No file deletions or moves were authorized.
+
+## Final C005 acceptance (2026-11-05)
+
+**C005 = PASS (backup N/A: no existing nature footage).** The user explicitly confirmed that there are **no nature video files saved in any other folders** beyond the two scanned locations.
+
+Evidence:
+- Windows PowerShell read-only audit: `VIDEO_COUNT: 0`, `VIDEO_BYTES: 0`, `C005_NO_MEDIA_FOUND_IN_SCANNED_FOLDERS`.
+- Scanned roots: `D:\NatureVideoStudio` and `D:\03 자연풍경 비디오`.
+- C004 checked `downloads` SQLite table: 0 rows.
+- User confirmation: no additional previously downloaded nature video files elsewhere.
+- SHA sample comparison and video copy backup: **N/A** because there are zero source video files; not inaccurately described as hash-checked backups.
+- User files were not moved, deleted, or overwritten. The video backup directory is only a proposed target, not evidence of files copied.
+
+Next: C006 per the user's master checklist; do not presume its exact acceptance wording without reviewing that row. Preserve the separate C002 ZIP and C004 SQLite backups.
