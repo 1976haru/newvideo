@@ -89,3 +89,20 @@ C011_TRIAL_RUN_COMPLETE
 **아직 확인되지 않은 사항:** 실제 Windows 제목 표시줄에 표시된 문구의 스크린샷, V1.0.2 실제 창 제목과의 비교, V1 파일/DB 실행 전후 독립적 SHA256 검증. `V1_DATA_READ_OR_WRITTEN: False`는 프로그램이 출력한 설계상 진술이지 원본 디스크/보안 저장소를 독립 계측한 결과가 아니다.
 
 C011 최종 1/1 PASS는 사용자의 제목 표시줄 및 시험판 경고문 화면 캡처 확보 후 판정한다. 기존 C009/C010의 V1 무변경 증거는 **이번 V2 시험창 실행 이전 시점**의 증빙이며 이후 해시를 재검사한 것이 아니다. 별도 동작 검증이 필요한 C007/C009/C010 전체 완료로 확장해 해석하지 않는다.
+
+## Actual user Windows screenshot acceptance — 2026-11-06
+
+**C011 FINAL PASS — 1/1 point for the scoped V2 identity/titlebar acceptance.**
+
+The user provided a screenshot from the actual Windows PC, filename `08.JPG` in conversation (not uploaded to GitHub, since it includes a desktop environment). The screenshot visibly shows:
+
+- Native window titlebar: `[V2 시험판] Nature Video Studio v2.0.0.dev0 | 기존 V1.0.2 아님`.
+- In-window heading: `Nature Video Studio v2.0.0.dev0 · 시험판`.
+- Korean warning: `이 창은 V2 개발·검증용 화면입니다.`, notice that existing V1.0.2 program/data are not changed, and disclosure that search, download, playback, and editing are not yet connected.
+- Normal Windows titlebar controls and readable, uncut labels.
+
+These user-provided image observations supplement the prior real Windows console output `C011_GUI_SMOKE_PASS`, `C011_OPENING_V2_TITLEBAR_WINDOW`, `C011_TRIAL_RUN_COMPLETE` and passing Windows CI Qt tests. **C011 V2 trial labeling is now fully accepted (1/1)**, with no false claim of a complete V2 application.
+
+Evidence boundaries: Screenshot of *original V1.0.2 window titlebar* is not included; V1 itself was not modified, and its prior exact title remains unverified. The screenshot alone does not independently prove no V1 DB writes or API key changes; keep C007/C009/C010 parallel-run, credential reuse, and rollback gates open. The screenshot is not distributed or committed to avoid exposing user desktop information.
+
+**Remaining program work:** V2 search/preview/download GUI and packaging, plus separate actual V1/V2 user-data safety checks. C011 passage does not advance those unfinished milestones.
