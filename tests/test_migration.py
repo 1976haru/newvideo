@@ -201,3 +201,15 @@ def test_wal_sidecar_blocks_migration(paths):
     with pytest.raises(MigrationBlocked, match="journal/WAL"):
         prepare_migration(source, dest, recovery)
     assert fake.is_file() and not dest.exists()
+
+
+def test_interrupted_rollback_blocks_until_review(paths):
+    source, dest, recovery = paths
+    journal = prepare_migration(source, dest, recovery)
+    activate_migration(journal, user_approved=True)
+    metadata = json.loads(journal.read_text(encoding="utf-8"))
+    metadata["status"] = "ROLLING_BACK"
+    journal.write_text(json.dumps(metadata), encoding="utf-8")
+    assert migration_state(journal) == "INTERRUPTED_ROLLBACK_BLOCKED"
+    with pytest.raises(MigrationBlocked, match="not activated"):
+        rollback_migration(journal, user_approved=True)
