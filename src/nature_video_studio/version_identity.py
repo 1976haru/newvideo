@@ -27,7 +27,7 @@ class AppIdentity:
     @property
     def heading(self) -> str:
         if self.trial:
-            return f"Nature Video Studio V2.0.0 · 시험판"
+            return f"Nature Video Studio v{self.version} · 시험판"
         return f"Nature Video Studio v{self.version}"
 
     @property

@@ -32,3 +32,18 @@ jobs:
       - name: Audit, copy, checksum, conflict, and nonmutation
         shell: powershell
         run: .\tests\test_c005_video_backup.ps1
+
+  c011-qt-windows:
+    name: C011 Qt title identity smoke (Windows)
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+      NVS_RUN_QT_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev,gui]"
+      - run: python -m pytest -q tests/test_c011_version_identity.py tests/test_c011_gui.py
+      - run: python -m nature_video_studio --smoke

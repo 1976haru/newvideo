@@ -5,7 +5,6 @@ search / preview / rights / download GUI is not implemented by this screen.
 """
 from __future__ import annotations
 
-import os
 import sys
 
 from .version_identity import V2_IDENTITY, validate_trial_identity
@@ -68,9 +67,6 @@ def main(argv: list[str] | None = None) -> int:
     window = build_window()
     if argv == ["--smoke"]:
         if "[V2 시험판]" not in window.windowTitle():
-            print("C011_GUI_SMOKE_FAIL")
-            return 1
-        if window.findChild(type(window.centralWidget()), "absent") is not None:
             print("C011_GUI_SMOKE_FAIL")
             return 1
         print("C011_GUI_SMOKE_PASS")

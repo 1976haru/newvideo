@@ -38,5 +38,5 @@ def test_version_is_explicit_never_legacy_alias(identity):
 
 
 def test_version_heading_explicit_trial():
-    assert "V2.0.0" in V2_IDENTITY.heading
+    assert f"v{__version__}" in V2_IDENTITY.heading
     assert "시험판" in V2_IDENTITY.heading
