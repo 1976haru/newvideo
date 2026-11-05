@@ -8,7 +8,7 @@ Progress is tracked only as verified deliverables, not a subjective overall succ
 | R1 search+long adapter | 20% | mock/provider tests: >=180s truly original, missing duration rejected, 4K verified, Pexels not advertised as long |
 | R2 previews | 20% | thumbnails render on Windows; real local video play/seek/mute; network/image failure diagnostics; fallback |
 | R3 rights/download/library | 20% | rights evidence, user consent, selection-only download, pause/resume, hash, dedup, safe file paths |
-| R4 composer/export | 20% | 3/10/30/60-min render, unique clip boundaries, codec normalization, ffprobe output validation |
+| R4 composer/export | 20% | 3/10/20/30/60-min render, unique clip boundaries, codec normalization, ffprobe output validation |
 | R5 packaging/release | 10% | Windows MSI/portable EXE build, cold install, non-ASCII path, reboot and data-preservation regression |
 
 ## Immediate Codex tasks (in this exact order)
