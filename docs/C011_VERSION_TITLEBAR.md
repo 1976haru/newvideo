@@ -41,3 +41,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
 1. V1 실물 타이틀바 화면 확인 — 이전 V1 소스 수정·재설치 금지.
 2. 사용자 PC에 표시되는 V2 시험판 타이틀바 캡처 — 현재 미확인.
 3. 향후 V2 정식 버전 표시는 개발/시험판 꼬리표를 제거하되, 릴리스 검증 전에는 절대 정식판으로 표기 금지.
+
+## GitHub Actions 검증 증거 — 2026-11-06
+
+- 검증된 코드 SHA: `f7a0cb8aad0536f8af4cbbd1b6f95e9b22eed898`.
+- CI 실행 기록: https://github.com/1976haru/newvideo/actions/runs/42117366964
+- `python -m pytest -q`: Windows 3.11/3.12, Ubuntu 3.11/3.12 각 **124 PASS, 1 SKIP, 0 FAIL**. SKIP은 기본 환경에서 별도의 Windows 전용 Qt 실행 검사를 중복 실행하지 않기 위한 조건부 테스트.
+- Windows 전용 GUI job: `python -m pytest -q tests/test_c011_version_identity.py tests/test_c011_gui.py` → **6 PASS**, `python -m nature_video_studio --smoke` → `C011_GUI_SMOKE_PASS`, PowerShell 5.1 설치 스크립트 **문법 검사 PASS**(`C011_INSTALLER_PARSE_PASS`).
+- `QT_QPA_PLATFORM=offscreen` 검사이므로 Windows 사용자 화면의 **네이티브 타이틀바 스크린샷은 아직 SKIP**.
+- 사용자의 Windows V1.0.2 타이틀바 문구도 실제 캡처로 확인되지 않았음. V1 원본 코드는 그대로 보존.
+- **C011 최종 1/1점은 사용자 Windows 캡처 확인 후 부여**.
