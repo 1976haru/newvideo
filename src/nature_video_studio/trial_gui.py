@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
             print("C011_GUI_SMOKE_FAIL")
             return 1
         print("C011_GUI_SMOKE_PASS")
-        print("TITLE: " + window.windowTitle())
+        print("TITLE_UNICODE_ESCAPE: " + window.windowTitle().encode("unicode_escape").decode("ascii"))
         print("WINDOW_OBJECT_NAME: " + window.objectName())
         print("V1_DATA_READ_OR_WRITTEN: False")
         print("REAL_WINDOWS_TITLEBAR_CAPTURE: SKIP_NOT_RUN")
