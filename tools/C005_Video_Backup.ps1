@@ -166,7 +166,7 @@ try {
         already_matched_count = $matched
         hash_verified_count = $entries.Count
         source_roots = @($rootRecords | ForEach-Object { $_.Root })
-        files = @($entries)
+        files = $entries.ToArray()
         note = "Copy-only backup; source untouched. Separate-device backup still advised."
     }
     $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifest -Encoding UTF8
