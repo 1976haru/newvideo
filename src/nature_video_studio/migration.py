@@ -275,6 +275,8 @@ def migration_state(journal: Path) -> str:
         if current == info["before_sha256"] and Path(info["staged"]).is_file():
             return "INTERRUPTED_BEFORE_PROMOTION_BLOCKED"
         return "UNEXPECTED_CHANGE_BLOCKED"
+    if info["status"] == "ROLLING_BACK":
+        return "INTERRUPTED_ROLLBACK_BLOCKED"
     if info["status"] == "ACTIVE" and current != info["new_sha256"]:
         return "ACTIVE_DB_CHANGED_NO_AUTO_ROLLBACK"
     return info["status"]
@@ -296,6 +298,8 @@ def rollback_migration(journal: Path, *, user_approved: bool = False) -> Path:
     if quarantined.exists():
         raise MigrationBlocked("Quarantine destination already exists")
     restore = target.with_name(target.name + ".c008_restore_" + info["id"])
+    if restore.exists():
+        raise MigrationBlocked("Rollback staging destination already exists")
     if info["previous"]:
         previous = Path(info["previous"])
         if sha256_file(previous) != info["previous_sha256"]:
@@ -303,6 +307,9 @@ def rollback_migration(journal: Path, *, user_approved: bool = False) -> Path:
         shutil.copyfile(previous, restore)
         if sha256_file(restore) != info["previous_sha256"]:
             raise MigrationBlocked("Restore staging checksum mismatch")
+    info["status"] = "ROLLING_BACK"
+    info["quarantined"] = str(quarantined)
+    _write_journal(path, info)  # interrupted rollback must block app startup
     os.replace(target, quarantined)
     if restore.exists():
         os.replace(restore, target)
