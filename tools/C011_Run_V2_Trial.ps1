@@ -2,7 +2,7 @@ param(
     [switch]$NoLaunch
 )
 $ErrorActionPreference = 'Stop'
-$PinnedSourceSha = '7e0992305b64ad71515d35be72c1f509d63ea1b8'
+$PinnedSourceSha = '10206483d704af57e3c13df2b58b4e1548f66163'
 $AppRoot = 'D:\NVS_V2_Trial_App'
 $InstallRoot = Join-Path $AppRoot ('C011_Titlebar_' + $PinnedSourceSha.Substring(0, 8))
 $Venv = Join-Path $InstallRoot '.venv'
