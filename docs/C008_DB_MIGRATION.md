@@ -49,3 +49,15 @@ Tests include 0-row actual-shape V1 fixture, nonempty metadata preservation, Kor
 Do not run migration against a user's real D: drive until those gates are verified and the user consents. C008 is a schema/strategy + synthetic tests milestone, not a claim that user data was transferred.
 
 - Crash while restoring the old V2 snapshot is tracked as ROLLING_BACK and must BLOCK V2 startup pending manual hash-verified recovery; the rollback routine does not silently restart or discard the quarantined copy.
+
+## C008 completion evidence — 2026-11-06
+
+**CHECKLIST C008: DESIGN/TEST PASS (3/3)**. This grading is confined to the stated "schema version, up/down + rollback strategy, interruption recovery policy and test fixtures" milestone, **NOT** to live user migration, GUI integration, or release.
+
+- GitHub head for tested code: c3022551c10bf09b074a6fac39de8ebb257cd292.
+- GitHub Actions Windows 3.11 and 3.12, Ubuntu 3.11 and 3.12: 86 pytest cases PASS each.
+- Independent Windows C005 PowerShell fixtures PASS.
+- Test commands: python -m pytest -q (CI), with C008-focused suite tests/test_migration.py.
+- C008 synthetic fixture suite covers old schema → staged V2 schema v1 → user-approved activate → rollback and quarantine, existing V2 records, empty legacy database (matching real user downloads row count 0), broken schema, corruption, unsupported schema, changed target, duplicate import, WAL sidecars, missing source, and interrupted activation/rollback states.
+- The user's C004 real DB and the C002 original ZIP remain unchanged and unaccessed by these test runs.
+- **Deferred:** real Win10/11 parallel V1+V2 executable smoke, recovery UI, crash injection, free-disk sizing, busy/locked DB handling, final V1-to-V2 user-approved import. Do not mark those PASS.
