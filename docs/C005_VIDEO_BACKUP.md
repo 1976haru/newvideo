@@ -26,3 +26,26 @@ Tests (fixtures in temporary folders only):
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test_c005_video_backup.ps1
 ```
+
+## User Windows read-only inventory result — 2026-11-05
+
+**Audit PASS / Backup N/A in scanned roots / C005 full scope pending user confirmation of any other footage folders.**
+
+User executed pinned `6b75c686f3d03a955729a2899d5069e5b3b5284f` script `& $work -Mode Audit`, and reported:
+
+```text
+===== C005 VIDEO AUDIT =====
+MODE: AUDIT
+SOURCE_01: D:\NatureVideoStudio
+SOURCE_02: D:\03 자연풍경 비디오
+VIDEO_COUNT: 0
+VIDEO_BYTES: 0
+VIDEO_GIB: 0
+BACKUP_DIR: D:\NVS_Recovery\C005_VIDEOS
+C005_NO_MEDIA_FOUND_IN_SCANNED_FOLDERS
+===== C005 REPORT END =====
+```
+
+Interpretation: supported video extensions in these two roots were not found. Do not infer that all user video files are absent elsewhere. There is nothing to copy or hash-compare in these two roots, so copying is not needed and backup verification is not applicable there. C004 separately recorded downloads table at 0 rows. **No video backup was created, and no global absence claim has been made.**
+
+Before marking C005 wholly complete, confirm whether other user-managed nature video folders exist; if yes, audit them as additional explicit scan roots and perform opt-in, capacity-checked copy-only backup. If not, mark C005 `완료 (대상 없음/N/A)` with this evidence. No file deletions or moves were authorized.
