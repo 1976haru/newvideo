@@ -102,3 +102,12 @@ def test_source_db_not_created_when_missing(tmp_path):
     with pytest.raises(FileNotFoundError):
         inspect_legacy_download_counts(database)
     assert not database.exists()
+
+
+def test_v2_settings_namespace_never_equals_v1():
+    from nature_video_studio.storage_layout import (
+        V2_SETTINGS_ORGANIZATION, V2_SETTINGS_APPLICATION,
+    )
+    assert (V2_SETTINGS_ORGANIZATION, V2_SETTINGS_APPLICATION) != (
+        'NatureVideoStudio', 'NatureVideoStudio'
+    )
