@@ -25,3 +25,29 @@
 Run `tools/audit_v102_credential_schema.py` on the backup folder `D:\NVS_Recovery\C002_V1.0.2`. It validates the ZIP SHA256, parses `nvs/credentials.py` *as text only*, and prints safe service/keyring argument patterns. It **never imports keyring**, never calls `get_password`, and never reads registry credential values. Source may use a variable provider name rather than literal usernames, requiring review of call sites before marking exact mapping confirmed.
 
 **C006 acceptance:** static service and username derivation audited + compatibility design documented (2/2 planning points). Runtime no-reentry test is a separate release gate, not evidence to award under C006 until it actually runs.
+
+## Windows user evidence — 2026-11-06
+
+**C006 PLAN PASS (2/2); runtime credential reuse remains NOT TESTED.**
+
+User executed the pinned `ff5a9d63db8559823421b3d8a37ba75bb304b3e9` `tools/audit_v102_credential_schema.py` against the C002 recovery archive and returned:
+
+```text
+C006_STATIC_AUDIT_PASS
+ZIP_SHA256_MATCH: True
+SERVICE_IDENTIFIER: NatureVideoStudio_2026
+KEYRING_CALL_PATTERNS:
+  delete_password(SERVICE, provider)
+  get_password(SERVICE, provider)
+  set_password(SERVICE, provider)
+ALLOWED_KEY_IDENTIFIERS: (none)
+FUNCTION_NAMES: read_key, save_key
+SECRET_VALUES_ACCESSED: False
+===== C006 STATIC AUDIT END =====
+```
+
+**Interpretation:** The account identifier supplied to keyring is the `provider` argument (a variable), **not a hardcoded provider string in this source file**. Static source inspection did not reveal the literal values passed by callers; inspect V1 GUI call sites and verify each provider identifier before implementing V2. `delete_password` is referenced in the V1 code, so V2 must NOT call legacy save/delete on startup, upgrade, or fallback read.
+
+This evidence verifies the legacy service identifier, the credential API argument pattern, source ZIP integrity and the fact that the audit accessed no secret values. It does **not** establish whether a particular provider's key is stored in the user's Windows account, whether V2 can retrieve it at runtime, or whether the key remains valid. Those are subsequent integration/release gates.
+
+No credential values were accessed or shared; no source ZIP, database or user application files were altered by this verification.
