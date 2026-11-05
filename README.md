@@ -2,7 +2,7 @@
 
 Windows desktop project for finding **legally reusable nature footage**, prioritizing original takes **>=180 seconds**, previewing results, and curating 15-song playlist video backgrounds.
 
-**Status:** Research and architecture baseline, NOT a runnable V2 application. The legacy V1.0.2 prototype was distributed separately and is not claimed to be production ready.
+**Status:** C011 has a minimal runnable **V2 trial identity window** for titlebar verification only; the actual V2 search, download, preview, edit workflow and Windows EXE are NOT implemented. The legacy V1.0.2 remains a separate program and is not production ready.
 
 ## Principles
 1. Never imply that a <3-minute stock video is an original 3-minute take.
@@ -28,3 +28,7 @@ Python 3.11+ · PySide6 · Qt Multimedia (QMediaPlayer) · requests/httpx · SQL
 No provider credentials or downloaded media are committed.
 
 Project owner: 1976haru. This branch is the V2 design baseline, not V2 feature completion.
+
+## C011 - versioned V2 trial window
+
+A minimal PySide6 window can be started after installing the optional GUI dependencies: `python -m nature_video_studio`. The title starts with `[V2 시험판]` and includes the current `v2.0.0.dev0` version. It does not access V1.0.2 files, credentials, database, or media. For an isolated one-time Windows install into a new `D:\NVS_V2_Trial_App\C011_Titlebar_*` folder, follow [C011 titlebar UAT](docs/C011_VERSION_TITLEBAR.md). The Windows titlebar screenshot is not yet verified.
