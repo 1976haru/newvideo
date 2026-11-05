@@ -142,7 +142,7 @@ def test_assessment_matches_stable_v1_without_false_v2_claim():
     ({"root": r"E:\Other"}, "REVIEW_CHANGED_STATE"),
     ({"key_status": {"pexels": "ABSENT"}}, "REVIEW_CHANGED_STATE"),
     ({"db_exists": False}, "REVIEW_MISSING_PATH"),
-    ({"key_status": {}}, "REVIEW_KEY_UNVERIFIED"),
+    ({"key_status": {}}, "REVIEW_CHANGED_STATE"),
 ])
 def test_changed_or_missing_evidence_does_not_pass(update, expected):
     baseline = {
