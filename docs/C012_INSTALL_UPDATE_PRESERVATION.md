@@ -45,3 +45,19 @@ GitHub Actions `.github/workflows/ci.yml`의 기본 Python 테스트 매트릭�
 - `main`은 건드리지 않고 `feature/v2-research-rebuild`만 작업. 기존 V1.0.2 API 키·DB·영상·백업에는 접근하지 않았음.
 
 **C012 수용 기준:** 보호 코드를 실제 업데이트 진입점에서 호출하도록 강제하고, Windows 설치형 업데이트 전후 DB/영상·키 미변경 자동 및 UAT 증거를 확보한 때만 3/3점 최종 PASS.
+
+## C012 verified CI evidence — 2026-11-06
+
+**Preservation code/test gate: PASS. Actual installer upgrade: SKIP / C012 final remains PENDING.**
+
+GitHub Actions run: https://github.com/1976haru/newvideo/actions/runs/42119797636 (verified source HEAD before this documentation-only commit: `1bf2e51ff4fc0502830e40346a8f9e316e303616`).
+
+Actual CI jobs: Windows Python 3.11, 3.12; Ubuntu Python 3.11, 3.12; Windows C011 Qt GUI smoke; Windows C005 PowerShell safety fixtures — all SUCCESS.
+
+- Required preservation command: `python -m pytest -q -k migration_and_preservation` → **26 PASSED / 125 DESELECTED** on Windows Python 3.11 (and the other matrix operating systems passed their jobs).
+- Full regression command: `python -m pytest -q` → **150 PASSED / 1 SKIPPED / 0 FAILED** on Windows Python 3.11. SKIP is the Qt GUI smoke that is executed in a separate dedicated Windows job.
+- Dedicated Windows Qt job: **6 PASSED**, `C011_GUI_SMOKE_PASS`.
+- CI gates exercise synthetic SQLite databases, media, backup snapshots and fake keyring. No actual Windows credential was read and no real D: user file was changed.
+- **Progress**: C012 provisional design + CI coverage accepted; installation workflow still unimplemented, so preserve **0/3 final acceptance points** until real packaged update tests. Alternatively report 2/3 internal design/test stages separately, never claim C012 final PASS.
+
+Missing before final acceptance: wire this guard into an actual Windows installer/updater and uninstall process, package signature/provenance verification, simulated disk-full/locked database and real VM upgrade, check Windows Credential Manager masked status before/after, recovery/rollback after interrupted installer. Branch protection required checks not independently verified.
