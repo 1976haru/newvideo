@@ -64,3 +64,41 @@ py -3 "$c010"
 - 실제 Windows V1 복귀 기준선: C009 PASS 재사용 가능, C010 스크립트로 다시 점검 가능.
 - **실제 V2 중단 → V1 GUI 복귀: BLOCKED / 0점(3점 만점) 유지.**
 - 남은 우선순위: V2 실행판, 통제된 실패 주입, V1 복귀 캡처/로그 및 원본 보존 해시 대조.
+
+## C010 Windows user evidence — 2026-11-06
+
+**READINESS PASS ONLY / FULL C010 UAT PENDING (0/3 acceptance points).**
+The user ran the script pinned to `99e3a1347cda7163eafe3599583fdb29ba79ff46`, fetched from the project's GitHub raw URL, with:
+
+```powershell
+py -3 "$c010"
+```
+
+Masked output reported by the user:
+
+```text
+===== C010 V1 FALLBACK READINESS =====
+ROOT=MATCH
+DB_SHA256=MATCH
+KEY_IDENTIFIERS=MATCH
+KEY_STATUS=MATCH
+RECOVERY_BACKUPS=MATCH
+ROOT_SOURCE: DEFAULT_CANDIDATE
+KEYRING_CHECK: CHECKED_MASKED
+KEY_PEXELS: PRESENT
+KEY_PIXABAY: PRESENT
+SECRET_VALUES_PRINTED: False
+C010_V1_FALLBACK_READINESS_PASS_ONLY
+V2_CRASH_INJECTED: False
+V2_TO_V1_GUI_ROLLBACK_TEST: SKIP_NOT_RUN
+===== C010 REPORT END =====
+```
+
+Interpretation:
+- Actual Windows local read-only check confirms V1 data path, original database checksum, legacy Pexels/Pixabay key presence flags and recovery backups match the prior C009 saved baseline.
+- `DEFAULT_CANDIDATE` is inferred rather than a user-saved QSettings path. Neither token values nor record contents were printed.
+- No V2 fault was injected, the V2 application was not run, and V1 was not re-launched *after a V2 failure*. It would be incorrect to claim C010 overall PASS or real rollback success.
+- C005 confirmed no existing user nature footage for these folders, hence actual video-file preservation/playback is N/A for this baseline.
+- No V1 keys, media, databases or recovery files were modified by the audit.
+
+**Deferred:** when V2 trial app/EXE and controlled fault injection exist, run the actual V2-fail / V1-relaunch UAT, capture redacted screenshots and verify SHA/credential persistence. Preserve all V1 and backup files.
