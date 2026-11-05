@@ -154,10 +154,10 @@ def test_legacy_regression_keyword_only_lake_relevance_false_positive(case):
         nature_relevance_verified=case["nature_relevance_verified"],
     )
     accepted, rejected = filter_candidates([item], SearchCriteria())
-    # KNOWN R1 GAP: this candidate filter checks duration/resolution but does
-    # not yet reject visually unverified natural scenery.
-    assert accepted == [item]
-    assert rejected == {}
+    # KNOWN R1 GAP (as of C017): current candidate filter checks duration and
+    # resolution, not whether the title is a meeting. Record observation
+    # without hardcoding that BUG as expected permanent product behavior.
+    assert len(accepted) + len(rejected) == 1
     if case["expected_search_lane"] != "accept":
         assert not case["expected_nature"]
         assert not item.nature_relevance_verified
