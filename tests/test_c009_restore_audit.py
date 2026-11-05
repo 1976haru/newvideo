@@ -142,13 +142,14 @@ def test_assessment_matches_stable_v1_without_false_v2_claim():
     ({"root": r"E:\Other"}, "REVIEW_CHANGED_STATE"),
     ({"key_status": {"pexels": "ABSENT"}}, "REVIEW_CHANGED_STATE"),
     ({"db_exists": False}, "REVIEW_MISSING_PATH"),
+    ({"launcher_exists": False}, "REVIEW_MISSING_PATH"),
     ({"key_status": {}}, "REVIEW_CHANGED_STATE"),
 ])
 def test_changed_or_missing_evidence_does_not_pass(update, expected):
     baseline = {
         "root": r"D:\NatureVideoStudio", "db_sha256": "abc",
         "providers": ["pexels"], "key_status": {"pexels": "PRESENT"},
-        "app_exists": True, "root_exists": True, "db_exists": True,
+        "app_exists": True, "launcher_exists": True, "root_exists": True, "db_exists": True,
         "c002_sha256_ok": True, "c004_sha256_ok": True,
     }
     after = dict(baseline)
