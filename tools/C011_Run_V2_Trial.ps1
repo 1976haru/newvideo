@@ -15,8 +15,7 @@ if (-not (Test-Path -LiteralPath 'D:\' -PathType Container)) {
 }
 foreach ($protected in @(
     'D:\NatureVideoStudio',
-    'D:\NVS_Recovery',
-    'D:\03 자연풍경 비디오\NatureVideoStudio_V1_0_2'
+    'D:\NVS_Recovery'
 )) {
     if ([System.IO.Path]::GetFullPath($InstallRoot).TrimEnd('\') -eq
         [System.IO.Path]::GetFullPath($protected).TrimEnd('\')) {
