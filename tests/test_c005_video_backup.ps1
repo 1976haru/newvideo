@@ -43,3 +43,6 @@ try {
 } finally {
     Remove-Item -LiteralPath $testRoot -Recurse -Force -ErrorAction SilentlyContinue
 }
+
+# Reset the expected nonzero exit code from the deliberate conflicting-backup test.
+exit 0
