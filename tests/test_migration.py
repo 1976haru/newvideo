@@ -1,5 +1,6 @@
 """C008 synthetic V1 -> staged V2 -> rollback tests. Never access user's D: drive."""
 import json
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 
@@ -18,7 +19,7 @@ def legacy_fixture(path: Path, count=2):
         '"' + name + '" ' + ("NUMERIC" if name in ("width", "height", "duration") else "TEXT")
         for name in V1_FIELDS
     )
-    with sqlite3.connect(path) as c:
+    with closing(sqlite3.connect(path)) as c, c:
         c.execute("CREATE TABLE downloads (" + definitions + ")")
         for idx in range(count):
             row = (
@@ -52,7 +53,7 @@ def test_original_v1_to_v2_then_rollback_preserves_source(paths):
     with pytest.raises(MigrationBlocked, match="consent"):
         activate_migration(journal)
     activate_migration(journal, user_approved=True)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         assert conn.execute("PRAGMA user_version").fetchone()[0] == V2_SCHEMA_VERSION
         assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         assert conn.execute("SELECT COUNT(*) FROM legacy_downloads").fetchone()[0] == 2
@@ -72,7 +73,7 @@ def test_original_v1_to_v2_then_rollback_preserves_source(paths):
 def test_existing_v2_user_data_survives_upgrade_and_rollback(paths):
     source, dest, recovery = paths
     dest.parent.mkdir(parents=True)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         conn.execute("CREATE TABLE documents (note TEXT)")
         conn.execute("INSERT INTO documents VALUES ('keep existing V2 user work')")
         conn.execute("CREATE TABLE schema_migrations (migration_id TEXT PRIMARY KEY,"
@@ -82,12 +83,12 @@ def test_existing_v2_user_data_survives_upgrade_and_rollback(paths):
     journal = prepare_migration(source, dest, recovery)
     assert dest.read_bytes() == original, "preparation must not mutate live V2 DB"
     activate_migration(journal, user_approved=True)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         assert conn.execute("SELECT note FROM documents").fetchone()[0] == "keep existing V2 user work"
         assert conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 2
     quarantine = rollback_migration(journal, user_approved=True)
     assert quarantine.exists()
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         assert conn.execute("SELECT note FROM documents").fetchone()[0] == "keep existing V2 user work"
         assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
 
@@ -98,14 +99,14 @@ def test_empty_legacy_db_is_valid(paths):
     legacy_fixture(source, count=0)
     journal = prepare_migration(source, dest, recovery)
     activate_migration(journal, user_approved=True)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         assert conn.execute("SELECT COUNT(*) FROM legacy_downloads").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0
 
 
 def test_bad_legacy_schema_blocked_without_writes(paths):
     source, dest, recovery = paths
-    with sqlite3.connect(source) as conn:
+    with closing(sqlite3.connect(source)) as conn, conn:
         conn.execute("ALTER TABLE downloads ADD COLUMN unexpected TEXT")
     with pytest.raises(MigrationBlocked, match="Unsupported legacy"):
         prepare_migration(source, dest, recovery)
@@ -137,7 +138,7 @@ def test_same_source_root_protected(paths):
 def test_unsupported_version_preserves_existing_v2(paths):
     source, dest, recovery = paths
     dest.parent.mkdir()
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         conn.execute("PRAGMA user_version=99")
     before = sha256_file(dest)
     with pytest.raises(MigrationBlocked, match="Unsupported current V2 schema"):
@@ -148,13 +149,13 @@ def test_unsupported_version_preserves_existing_v2(paths):
 def test_changed_live_v2_blocks_activation(paths):
     source, dest, recovery = paths
     dest.parent.mkdir()
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         conn.execute("CREATE TABLE schema_migrations (migration_id TEXT PRIMARY KEY,"
                      "source_sha256 TEXT UNIQUE, imported_count INTEGER, applied_utc TEXT)")
         conn.execute("CREATE TABLE notes (note TEXT)")
         conn.execute("PRAGMA user_version=1")
     journal = prepare_migration(source, dest, recovery)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         conn.execute("INSERT INTO notes VALUES ('after prepare')")
     with pytest.raises(MigrationBlocked, match="changed"):
         activate_migration(journal, user_approved=True)
@@ -165,7 +166,7 @@ def test_change_after_activation_blocks_automatic_rollback(paths):
     source, dest, recovery = paths
     journal = prepare_migration(source, dest, recovery)
     activate_migration(journal, user_approved=True)
-    with sqlite3.connect(dest) as conn:
+    with closing(sqlite3.connect(dest)) as conn, conn:
         conn.execute("CREATE TABLE new_work (n TEXT)")
     with pytest.raises(MigrationBlocked, match="changed"):
         rollback_migration(journal, user_approved=True)
