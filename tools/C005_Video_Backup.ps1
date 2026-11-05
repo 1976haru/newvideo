@@ -1,4 +1,4 @@
-# Nature Video Studio C005 - safe video audit and optional copy-only backup.
+﻿# Nature Video Studio C005 - safe video audit and optional copy-only backup.
 # PowerShell 5.1 compatible. Original files are never modified, moved, or removed.
 [CmdletBinding()]
 param(
