@@ -25,5 +25,16 @@ On user's Windows computer, use **read-only** registry and file metadata reads t
 6. free space on volume containing root.
 Avoid printing secrets, download filenames, video metadata or any personally identifying file contents. Record **C003 PASS** only after runtime evidence. No user DB or downloads are moved/copied/deleted during C003.
 
-## Current result
-Static CODE audit PASS. Runtime path/size USER WINDOWS verification SKIP until output supplied. Not release complete.
+## Current result (2026-11-05; user-supplied Windows read-only output)
+**C003 PASS for default-root path and size inventory; actual registry value absent.**
+- `SETTING_SOURCE=DEFAULT_CANDIDATE`: no explicit `download_root` was returned from the inspected HKCU key. The fallback resolved to `D:\\NatureVideoStudio`, consistent with the GUI screenshot, but **not a saved QSettings value**.
+- Root exists.
+- `downloads` folder absent; this is **not evidence that stored footage was deleted** and does not prove there are no videos in alternate locations.
+- `cache`: 17 files, reported 0.001 GiB (rounding; approximately 1 MiB).
+- `library.sqlite3` exists, 12,288 bytes (12 KiB); SQLite row count/content not inspected in C003.
+- `library.sqlite3-wal` and `library.sqlite3-shm` absent at observation time.
+- Disk free at observation: 50.12 GiB.
+- No backup, content read, download, deletion, mutation or migration was performed by C003.
+- **C004 next**: use a SQLite-consistent backup and read-only inspection, record schema and row counts; verify checksum of backup (do not copy a live SQLite database while it is being modified). Do not confuse absence of WAL with proof of DB integrity.
+
+Do not infer media count from missing downloads folder or infer empty catalog from DB size. The user must provide C004 runtime evidence before that item can be approved.
