@@ -29,3 +29,37 @@
 - python -m pytest -q
 
 Only mock secrets and synthetic fixtures are used in CI. This is not a real Windows GUI run.
+
+## Actual user Windows BEFORE evidence — 2026-11-06 06:25 KST
+
+**C009 stage 1 BEFORE baseline PASS; C009 final status remains PENDING.**
+User invoked the pinned commit `88d334c981a30aefc84be2feccbc7fd1c028ed40` audit script:
+
+```powershell
+py -3 "$work" before
+```
+
+Actual masked output:
+
+```text
+===== C009 MASKED RESTORE AUDIT =====
+APP_FOLDER_EXISTS: True
+LAUNCHER_EXISTS: True
+ROOT_SOURCE: DEFAULT_CANDIDATE
+ROOT: D:\NatureVideoStudio
+ROOT_EXISTS: True
+DB_EXISTS: True
+DB_SHA256: 4D2BDC3567A6FA7CFA1577DCB42D3A582551B5F972AA55057BEB0EA7654E7973
+C002_ZIP_SHA256_MATCH: True
+C004_DB_BACKUP_SHA256_MATCH: True
+KEYRING_CHECK: CHECKED_MASKED
+KEY_PEXELS: PRESENT
+KEY_PIXABAY: PRESENT
+SECRET_VALUES_PRINTED: False
+C009_BEFORE_BASELINE_SAVED
+===== C009 REPORT END =====
+```
+
+The `DEFAULT_CANDIDATE` root is confirmed as the current inferred default, **not** evidence that QSettings explicitly stored this path. Credential presence is not proof API authentication/validity; the script read keys from Windows keyring in process memory and retained/printed only boolean presence. No secret values received in the transcript.
+
+**Next evidence needed:** user launches V1 GUI and verifies masked keys and displayed path without changing settings; closes V1; runs `py -3 "$work" after`; reports masked AFTER output. Even a successful V1 BEFORE/AFTER cannot pass the full C009 V1→V2 restore gate until a runnable V2 GUI reuses keys without reentry and V1 data remains intact.
