@@ -51,3 +51,41 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
 - `QT_QPA_PLATFORM=offscreen` 검사이므로 Windows 사용자 화면의 **네이티브 타이틀바 스크린샷은 아직 SKIP**.
 - 사용자의 Windows V1.0.2 타이틀바 문구도 실제 캡처로 확인되지 않았음. V1 원본 코드는 그대로 보존.
 - **C011 최종 1/1점은 사용자 Windows 캡처 확인 후 부여**.
+
+## 사용자 실제 Windows 실행 증빙 — 2026-11-06
+
+**C011 설치/실행 PASS; 실제 타이틀바 캡처 대기 (최종 1/1점은 보류).**
+
+사용자가 다음과 같이 검증된 스크립트(`6d07ff33b0be05738a433a031fe4adc730cf36d3`)를 PowerShell로 실행함:
+
+```powershell
+$script = "$env:TEMP\NVS_C011_Run_V2_Trial.ps1"
+$url = "https://raw.githubusercontent.com/1976haru/newvideo/6d07ff33b0be05738a433a031fe4adc730cf36d3/tools/C011_Run_V2_Trial.ps1"
+Invoke-WebRequest -Uri $url -OutFile $script -UseBasicParsing
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
+```
+
+사용자가 제출한 실제 핵심 출력:
+
+```text
+C011_NEW_V2_TRIAL_FOLDER_CREATED: True
+C011_DOWNLOADING_PINNED_SOURCE
+C011_CREATING_ISOLATED_VENV
+C011_INSTALLING_PYSIDE6_IN_ISOLATED_VENV
+Successfully installed PySide6-6.12.0 ...
+C011_GUI_SMOKE_START
+C011_GUI_SMOKE_PASS
+TITLE_UNICODE_ESCAPE: [V2 \uc2dc\ud5d8\ud310] Nature Video Studio v2.0.0.dev0 | \uae30\uc874 V1.0.2 \uc544\ub2d8
+WINDOW_OBJECT_NAME: NVS_V2_TRIAL_WINDOW
+V1_DATA_READ_OR_WRITTEN: False
+REAL_WINDOWS_TITLEBAR_CAPTURE: SKIP_NOT_RUN
+C011_OPENING_V2_TITLEBAR_WINDOW
+C011_V1_PROGRAM_AND_DATA_UNMODIFIED_BY_INSTALLER_DESIGN
+C011_TRIAL_RUN_COMPLETE
+```
+
+**확인된 사실:** Windows에서 별도 V2 시험 디렉터리 생성 및 격리 Python 가상환경/PySide6 설치가 완료됐고, Qt 스모크 테스트 후 실제 V2 창 진입·종료 경로가 정상 종료했다. 버전 식별 표시 문자열은 V1.0.2를 명확히 구분한다.
+
+**아직 확인되지 않은 사항:** 실제 Windows 제목 표시줄에 표시된 문구의 스크린샷, V1.0.2 실제 창 제목과의 비교, V1 파일/DB 실행 전후 독립적 SHA256 검증. `V1_DATA_READ_OR_WRITTEN: False`는 프로그램이 출력한 설계상 진술이지 원본 디스크/보안 저장소를 독립 계측한 결과가 아니다.
+
+C011 최종 1/1 PASS는 사용자의 제목 표시줄 및 시험판 경고문 화면 캡처 확보 후 판정한다. 기존 C009/C010의 V1 무변경 증거는 **이번 V2 시험창 실행 이전 시점**의 증빙이며 이후 해시를 재검사한 것이 아니다. 별도 동작 검증이 필요한 C007/C009/C010 전체 완료로 확장해 해석하지 않는다.
