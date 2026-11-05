@@ -34,3 +34,17 @@ YouTube reused content policy: https://support.google.com/youtube/answer/1311392
 4. Explicit 'original length' versus 'assembled output length', never mix.
 5. License evidence per asset; never infer rights solely from availability or Creative Commons site tags.
 6. Offline unit/provider tests first, Windows app/E2E and packaging release gate later.
+
+## C013 — R0 V1.0.2 source and preview-failure audit acceptance
+
+**Checklist status: PASS (2/2 planning/audit points).** The original November 5 V1.0.2 ZIP and `02.JPG` were audited before this verification; findings are summarized above. This acceptance covers **documented source/screenshot analysis only**, not a claim that the V1 preview fault was dynamically reproduced today or that the V2 preview has been repaired.
+
+| Required problem | Existing source/screenshot evidence | What is established | What is *not* established |
+| --- | --- | --- | --- |
+| QPixmap poster request failure | `nvs/gui.py`: `QNetworkAccessManager` → image display through `QLabel/QPixmap`; `02.JPG` showed a preview-error region | The legacy remote image path lacks differentiated HTTP/network/image-failure diagnostics | Exact HTTP code, codec, TLS, CORS or timeout root cause; needs response-level logging and controlled fixtures |
+| Actual video player missing | Legacy `nvs/gui.py` structure does not provide Qt Multimedia `QMediaPlayer` playback | Thumbnail rendering is **not video preview**: video play/pause/seek is not implemented in V1 | Whether a future Qt backend can play every source codec; verify with real Windows local-media tests |
+| Verified original ≥180s filter missing | `nvs/gui.py` existing length choices: all / 1 minute / 5 minutes / 10–30 minutes; `nvs/providers.py` provider source audit | No dedicated verified-original-180s selection path is evidenced. An arbitrary length setting must not be advertised as verifying original duration | Actual returned durations of future providers; verify metadata and final file through independent ffprobe, and never silently substitute short clips |
+
+**R1/R2 follow-up acceptance gates:** enforce >=180 seconds only after authentic original-duration verification; unknown duration fails the Long Take filter; keep Long Take and short-clip composition separate. For image failures, classify HTTP 403/404, TLS, timeout and decode failures with retry and original link. Add a real QMediaPlayer play/pause/seek widget and Windows smoke tests. These features remain **unimplemented** at C013 completion.
+
+**Audit provenance boundary:** Detailed original `nvs/gui.py` and `nvs/providers.py` source is preserved in the C002 V1.0.2 ZIP, not in this V2 GitHub branch. This section reconfirms the existing recorded audit; it does not claim a fresh end-to-end test or secretly load user's private original ZIP.
