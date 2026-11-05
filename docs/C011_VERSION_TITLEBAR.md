@@ -17,7 +17,7 @@
 
 ```powershell
 $script = "$env:TEMP\NVS_C011_Run_V2_Trial.ps1"
-$url = "https://raw.githubusercontent.com/1976haru/newvideo/de7f3d1135f3aec1b8db570b7bd041992ab3d186/tools/C011_Run_V2_Trial.ps1"
+$url = "https://raw.githubusercontent.com/1976haru/newvideo/6d07ff33b0be05738a433a031fe4adc730cf36d3/tools/C011_Run_V2_Trial.ps1"
 Invoke-WebRequest -Uri $url -OutFile $script -UseBasicParsing
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
 ```
