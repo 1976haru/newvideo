@@ -166,7 +166,8 @@ def assess(before: dict, after: dict) -> tuple[str, list[str]]:
                 for name, ok in checks]
     if any(not ok for _, ok in checks):
         return "REVIEW_CHANGED_STATE", outcomes
-    if not after["app_exists"] or not after["root_exists"] or not after["db_exists"]:
+    if (not after["app_exists"] or not after.get("launcher_exists", False)
+            or not after["root_exists"] or not after["db_exists"]):
         return "REVIEW_MISSING_PATH", outcomes
     if not after["key_status"] or any(x != "PRESENT" for x in after["key_status"].values()):
         return "REVIEW_KEY_UNVERIFIED", outcomes
