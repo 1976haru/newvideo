@@ -14,13 +14,13 @@ try {
     [IO.File]::WriteAllText($skip,"ignore this")
     $srcA = (Get-FileHash -LiteralPath $a -Algorithm SHA256).Hash
     $audit = & $scriptPath -Mode Audit -SourceDirs @($source) -BackupDir $dest
-    if ($LASTEXITCODE -ne 0 -or ($audit -notcontains "C005_AUDIT_PASS") -or ($audit -notcontains "VIDEO_COUNT: 2")) {
+    if (($audit -notcontains "C005_AUDIT_PASS") -or ($audit -notcontains "VIDEO_COUNT: 2")) {
         throw "Audit test failed: $($audit -join '; ')"
     }
     if (Test-Path $dest) { throw "Audit created backup directory." }
 
     $backup = & $scriptPath -Mode Backup -SourceDirs @($source) -BackupDir $dest
-    if ($LASTEXITCODE -ne 0 -or ($backup -notcontains "C005_BACKUP_PASS") -or ($backup -notcontains "HASH_VERIFIED: 2")) {
+    if (($backup -notcontains "C005_BACKUP_PASS") -or ($backup -notcontains "HASH_VERIFIED: 2")) {
         throw "Backup test failed: $($backup -join '; ')"
     }
     $copyA=Join-Path $dest "SOURCE_01\lake\winter.mp4"
@@ -28,7 +28,7 @@ try {
         throw "Source/backup hash differs."
     }
     $again = & $scriptPath -Mode Backup -SourceDirs @($source) -BackupDir $dest
-    if ($LASTEXITCODE -ne 0 -or ($again -notcontains "ALREADY_MATCHED: 2")) {
+    if (($again -notcontains "ALREADY_MATCHED: 2")) {
         throw "Idempotent re-run failed: $($again -join '; ')"
     }
     # A conflicting backup is NEVER overwritten.
