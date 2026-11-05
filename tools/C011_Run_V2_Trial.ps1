@@ -29,7 +29,10 @@ if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
     throw 'Python launcher py not installed. Existing V1 installation is unchanged.'
 }
 
-New-Item -ItemType Directory -Path $InstallRoot -Force:$false | Out-Null
+if (-not (Test-Path -LiteralPath $AppRoot)) {
+    New-Item -ItemType Directory -Path $AppRoot | Out-Null
+}
+New-Item -ItemType Directory -Path $InstallRoot | Out-Null
 Write-Host 'C011_NEW_V2_TRIAL_FOLDER_CREATED: True'
 Write-Host 'C011_DOWNLOADING_PINNED_SOURCE'
 Invoke-WebRequest -Uri $RepoZipUrl -OutFile $ZipFile -UseBasicParsing
