@@ -16,6 +16,12 @@ import sys
 from urllib.parse import quote
 
 
+# V1 QSettings: QSettings("NatureVideoStudio", "NatureVideoStudio").
+# Never use that namespace for V2, or a V2 setting could overwrite V1 values.
+V2_SETTINGS_ORGANIZATION = "NatureVideoStudioV2"
+V2_SETTINGS_APPLICATION = "NatureVideoStudioV2Trial"
+
+
 class UnsafeLayout(ValueError):
     """A path collides with another app or the preserved user data."""
 
