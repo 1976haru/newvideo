@@ -4,6 +4,8 @@ This module is NOT imported by headless core tests. Requires PySide6 Multimedia.
 Remote streaming must be handled separately after provider policy verification.
 """
 from pathlib import Path
+
+from .playback_diagnostics import classify_playback_failure
 from PySide6.QtCore import QUrl, Qt
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtMultimediaWidgets import QVideoWidget
@@ -65,4 +67,7 @@ class LocalVideoPlayer(QWidget):
 
     def _error(self, error, details):
         if error != QMediaPlayer.Error.NoError:
-            self.message.setText(f"영상 재생 오류: {details or str(error)}")
+            # Raw Qt backend error text can include local paths or signed URLs.
+            # Display only a stable diagnostic code and generic Korean message.
+            diagnosis = classify_playback_failure(details or "")
+            self.message.setText(f"영상 재생 오류 [{diagnosis.code}]: {diagnosis.message}")
