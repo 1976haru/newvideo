@@ -33,7 +33,7 @@ INTERNAL_ALLOWED = {
     "search_coordinator": {"filtering", "models", "source_adapter"},
     "preview_service": {"preview"},
     "rights_review": {"models", "rights"},
-    "download_queue": {"rights", "service_errors"},
+    "download_queue": {"rights", "service_errors", "network_security"},
     "catalog": {"models", "service_errors"},
     "composer": {"service_errors"},
 }
