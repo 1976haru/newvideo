@@ -68,6 +68,8 @@ class LaneState:
     results: tuple[MediaCandidate, ...] = ()
     rejected: dict[str, tuple[str, ...]] = field(default_factory=dict)
     provider_codes: tuple[str, ...] = ()
+    # C027 explicit offline UI preview: never represent synthetic emptiness as a live search.
+    offline_zero_demo: bool = False
     sequence: int = 0
 
     @property
@@ -87,6 +89,9 @@ class LaneState:
         if self.status == LaneStatus.FAILED:
             return "제공처 검색이 실패했습니다. 결과가 0건인지 확인할 수 없습니다."
         if self.status == LaneStatus.PARTIAL:
+            if not self.results:
+                return ("일부 제공처가 실패했습니다. 현재 확인된 후보는 0건(부분 결과)이지만 "
+                        "전체 원본이 0건인지는 확인할 수 없습니다. 자동 대체하지 않습니다.")
             return "일부 제공처가 실패했습니다. 표시된 건수는 부분 결과입니다."
         if self.status == LaneStatus.EMPTY:
             if self.mode == SearchMode.LONG_ORIGINAL:
@@ -96,7 +101,12 @@ class LaneState:
                 else:
                     maximum = f"{self.max_original_duration_seconds / 60:g}분"
                     span = minimum + " ~ " + maximum
-                return f"확인된 {span} 연속 원본 없음 (0건). 짧은 영상은 자동 대체하지 않습니다."
+                prefix = ("[C027 오프라인 테스트 — 실제 제공처 검색 아님] "
+                          if self.offline_zero_demo else "")
+                return (f"{prefix}선택한 조건의 검증된 {span} 연속 원본 0건. "
+                        "검색어·최소 길이·최대 길이·화질을 변경해 재검색하거나 "
+                        "아래 '짧은 영상 조합 탭 직접 열기'를 클릭해 선택할 수 있습니다. "
+                        "짧은 영상 자동 혼합·전환·검색·다운로드 없음.")
             return "확인된 5~120초 클립 없음 (0건). 장편 결과는 섞이지 않습니다."
         return "해당 탭에서 검색한 검증 후보만 표시합니다."
 
@@ -176,6 +186,7 @@ class SearchModeSession:
         lane.results = ()
         lane.rejected = {}
         lane.provider_codes = ()
+        lane.offline_zero_demo = False
         lane.status = LaneStatus.SEARCHING
         return SearchTicket(mode, lane.sequence, lane.text, criteria)
 

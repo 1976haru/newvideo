@@ -109,6 +109,16 @@ def main(argv: list[str] | None = None) -> int:
         print("C026_WINDOWS_PRESETS_AND_MAX_FAIL")
         return 15
 
+    # C027: real native Qt trial displays a separately labelled offline
+    # demo and a hidden alternative until the long lane is confirmed EMPTY.
+    from nature_video_studio.models import SearchMode
+    from nature_video_studio.search_mode_state import LaneStatus
+    demo = window.findChild(QPushButton, "longOfflineZeroDemo")
+    alternative = window.findChild(QPushButton, "longNoResultsAlternative")
+    if demo is None or alternative is None or alternative.isVisible():
+        print("C027_WINDOWS_ZERO_ALTERNATIVE_INITIAL_STATE_FAIL")
+        return 16
+
     handle = int(window.winId())
     if not handle or not ctypes.windll.user32.IsWindow(handle):
         print("C022_NATIVE_GUI_FAIL: Windows HWND missing")
@@ -139,6 +149,36 @@ def main(argv: list[str] | None = None) -> int:
         print("C022_NATIVE_GUI_FAIL: Qt client screenshot write failed")
         return 12
 
+    # User-driven offline sample follows the normal EMPTY rendering but is
+    # explicitly marked synthetic; it MUST NOT switch lanes on its own.
+    demo.click()
+    app.processEvents()
+    active_long = window.findChild(QTabWidget, "searchModeTabs")
+    count_long = window.findChild(QLabel, "longResultCount")
+    status_long = window.findChild(QLabel, "longSearchStatus")
+    count_short = window.findChild(QLabel, "shortResultCount")
+    if (active_long.currentIndex() != 0 or not alternative.isVisible()
+            or "0건" not in count_long.text() or "오프라인 테스트" not in count_long.text()
+            or "실제 제공처 검색 아님" not in status_long.text()
+            or not count_short.text().endswith("미검색")):
+        print("C027_WINDOWS_OFFLINE_ZERO_FAIL")
+        return 17
+    alternative.click()
+    app.processEvents()
+    if (active_long.currentIndex() != 1 or not count_short.text().endswith("미검색")):
+        print("C027_WINDOWS_EXPLICIT_SWITCH_ONLY_FAIL")
+        return 18
+    active_long.setCurrentIndex(0)
+    from PySide6.QtWidgets import QLineEdit
+    window.findChild(QLineEdit, "longSearchQuery").setText("호수")
+    window.findChild(QPushButton, "longSearchButton").click()
+    app.processEvents()
+    if (alternative.isVisible() or "0건" in count_long.text()
+            or "연결되지 않았습니다" not in status_long.text()
+            or active_long.currentIndex() != 0):
+        print("C027_WINDOWS_UNAVAILABLE_IS_NOT_ZERO_FAIL")
+        return 19
+
     snapshot = {
         "checklist": "C022",
         "test_kind": "WINDOWS_NATIVE_QT_TRIAL_GUI_SCREENSHOT",
@@ -161,6 +201,9 @@ def main(argv: list[str] | None = None) -> int:
         "c026_min_original_presets_seconds": [180, 600, 1200, 1800],
         "c026_separate_optional_max_limit": "PRESENT_OFF_BY_DEFAULT",
         "c026_live_api_filters": "NOT_CONNECTED",
+        "c027_offline_zero_demo": "PASS_EXPLICIT_TEST_ONLY",
+        "c027_zero_alternative_requires_click": "PASS",
+        "c027_no_provider_must_not_show_zero": "PASS",
         "real_search_download_preview_composer": "NOT_IMPLEMENTED",
         "user_v1_data_validation": "NOT_TESTED",
     }
@@ -174,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
     if window.isVisible():
         print("C022_NATIVE_GUI_FAIL: close button did not close window")
         return 13
+    print("C027_WINDOWS_NATIVE_NO_SILENT_FALLBACK_PASS")
+    print("C027_LIVE_ZERO_RESULT_SEARCH: SKIP_PROVIDER_NOT_CONNECTED")
     print("C026_WINDOWS_NATIVE_DURATION_PRESETS_PASS")
     print("C026_LIVE_PROVIDER_FILTER: SKIP_NOT_CONNECTED")
     print("C024_WINDOWS_NATIVE_SEARCH_TABS_PASS")

@@ -21,6 +21,7 @@ from .search_mode_state import (
     SearchModeSession, SearchTicket,
 )
 from .source_adapter import SearchQuery
+from .search_coordinator import ProviderStatus, SearchOutcome
 from .duration_self_check import run_duration_self_check
 
 
@@ -162,6 +163,18 @@ class _LanePane(QWidget):
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
 
+        if mode == SearchMode.LONG_ORIGINAL:
+            alternative_row = QHBoxLayout()
+            self.zero_demo_button = QPushButton("C027 오프라인 0건 화면 검사")
+            self.zero_demo_button.setObjectName("longOfflineZeroDemo")
+            alternative_row.addWidget(self.zero_demo_button)
+            alternative_row.addStretch()
+            self.alternative_button = QPushButton("짧은 영상 조합 탭 직접 열기")
+            self.alternative_button.setObjectName("longNoResultsAlternative")
+            self.alternative_button.hide()
+            alternative_row.addWidget(self.alternative_button)
+            layout.addLayout(alternative_row)
+
         self.results = QTableWidget(0, 4)
         self.results.setObjectName(prefix + "ResultsTable")
         self.results.setHorizontalHeaderLabels(
@@ -201,8 +214,18 @@ class _LanePane(QWidget):
             count_label = "미검색" if lane.status == LaneStatus.NOT_SEARCHED else "확인 불가"
         else:
             count_label = f"{lane.result_count}건"
+            if lane.status == LaneStatus.PARTIAL:
+                count_label += " (부분 결과·전체 미확인)"
+            elif lane.offline_zero_demo:
+                count_label += " (오프라인 테스트)"
         self.count.setText(f"이 탭의 결과: {count_label}")
         self.status_label.setText(lane.status_text)
+        if self.mode == SearchMode.LONG_ORIGINAL:
+            # Only a successful, definitively empty long search offers the
+            # short-lane alternative. Failed/unavailable/partial never trigger it.
+            self.alternative_button.setVisible(
+                lane.status == LaneStatus.EMPTY and lane.result_count == 0
+            )
         self.results.setRowCount(len(lane.results))
         for row, candidate in enumerate(lane.results):
             w, h = candidate.max_resolution
@@ -249,6 +272,45 @@ class SearchTabsWidget(QWidget):
         self.tabs.currentChanged.connect(self._tab_changed)
         self.panes[SearchMode.LONG_ORIGINAL].duration_check_button.clicked.connect(
             self.show_duration_self_check)
+        self.panes[SearchMode.LONG_ORIGINAL].zero_demo_button.clicked.connect(
+            self.preview_offline_no_results)
+        self.panes[SearchMode.LONG_ORIGINAL].alternative_button.clicked.connect(
+            lambda: self.switch_to(SearchMode.SHORT_COMPOSER))
+
+    def preview_offline_no_results(self) -> None:
+        """C027 local UI-only proof, no provider calls and no short-mode side effects.
+
+        Uses the very same real LaneState EMPTY rendering, but explicitly
+        labels synthetic output so it can never be mistaken for a live 0 hit.
+        """
+        mode = SearchMode.LONG_ORIGINAL
+        pane = self.panes[mode]
+        options = self._duration_options(pane)
+        try:
+            ticket = self.session.begin_search(
+                mode, pane.query.text().strip() or "C027 오프라인 0건 검사",
+                pane.resolution.currentData(), **options)
+        except ValueError:
+            pane.status_label.setText(
+                "길이 조건 오류: 최대 길이는 최소 길이보다 길거나 같아야 합니다.")
+            return
+        simulated = SearchOutcome(
+            accepted=(), rejected={},
+            providers=(ProviderStatus("C027_OFFLINE_TEST_ONLY", "OK", 0),),
+        )
+        if self.session.finish_search(ticket, simulated):
+            self.session.lane(mode).offline_zero_demo = True
+            pane.refresh()
+
+    @staticmethod
+    def _duration_options(pane):
+        return {
+            "min_original_duration_seconds": pane.min_duration.currentData(),
+            "max_original_duration_seconds": (
+                pane.max_duration_minutes.value() * 60
+                if pane.max_duration_enabled.isChecked() else None
+            ),
+        }
 
     def show_duration_self_check(self) -> None:
         """Offline synthetic cases only; this never calls providers or changes counts."""
@@ -285,18 +347,11 @@ class SearchTabsWidget(QWidget):
     def request_search(self, mode: SearchMode) -> None:
         pane = self.panes[mode]
         try:
-            options = {}
-            if mode == SearchMode.LONG_ORIGINAL:
-                options = {
-                    "min_original_duration_seconds": pane.min_duration.currentData(),
-                    "max_original_duration_seconds": (
-                        pane.max_duration_minutes.value() * 60
-                        if pane.max_duration_enabled.isChecked() else None
-                    ),
-                }
+            options = (self._duration_options(pane)
+                       if mode == SearchMode.LONG_ORIGINAL else {})
             ticket = self.session.begin_search(
                 mode, pane.query.text(), pane.resolution.currentData(), **options)
-        except ValueError as exc:
+        except ValueError:
             # Safe, fixed user-facing messages; do not show raw provider data.
             if not pane.query.text().strip():
                 pane.status_label.setText("이 탭의 검색어를 입력하세요.")
