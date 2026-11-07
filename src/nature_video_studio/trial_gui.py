@@ -12,7 +12,7 @@ from .version_identity import V2_IDENTITY, validate_trial_identity
 
 def build_window(*, live_providers: bool = True):
     """Import optional Qt only when GUI was explicitly launched."""
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import Qt, QTimer
     from PySide6.QtWidgets import (
         QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
     )
@@ -20,7 +20,23 @@ def build_window(*, live_providers: bool = True):
     from .search_tabs import SearchTabsWidget
 
     validate_trial_identity()
-    window = QMainWindow()
+    class _SafeCloseWindow(QMainWindow):
+        def closeEvent(self, event):
+            tabs = self.findChild(SearchTabsWidget, "trialSearchModes")
+            if tabs is not None:
+                running = tuple(getattr(tabs, "_threads", ())) + tuple(
+                    getattr(tabs, "_poster_workers", ())
+                )
+                if any(worker.isRunning() for worker in running):
+                    # Do not block the Qt event loop or destroy live QThreads;
+                    # let bounded network work end and retry close asynchronously.
+                    event.ignore()
+                    self.setEnabled(False)
+                    QTimer.singleShot(150, self.close)
+                    return
+            super().closeEvent(event)
+
+    window = _SafeCloseWindow()
     window.setObjectName("NVS_V2_TRIAL_WINDOW")
     window.setWindowTitle(V2_IDENTITY.window_title)
     window.resize(900, 660)
