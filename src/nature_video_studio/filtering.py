@@ -33,6 +33,10 @@ def duration_reason(candidate: MediaCandidate, criteria: SearchCriteria) -> str 
             return "클립 길이 미확인"
         if candidate.duration_seconds <= 0:
             return "비정상적 길이"
+        if candidate.duration_seconds < 5:
+            return "클립 길이 미달 (5초 미만)"
+        if candidate.duration_seconds > 120:
+            return "클립 길이 초과 (120초 초과)"
         return None
     return "잘못된 검색 모드"
 
