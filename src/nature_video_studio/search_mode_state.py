@@ -67,7 +67,7 @@ class LaneState:
 
     @property
     def result_count(self) -> int | None:
-        if self.status in (LaneStatus.NOT_SEARCHED, LaneStatus.UNAVAILABLE, LaneStatus.FAILED):
+        if self.status in (LaneStatus.NOT_SEARCHED, LaneStatus.SEARCHING, LaneStatus.UNAVAILABLE, LaneStatus.FAILED):
             return None
         return len(self.results)
 
