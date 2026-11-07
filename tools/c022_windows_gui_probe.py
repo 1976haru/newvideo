@@ -45,7 +45,9 @@ def main(argv: list[str] | None = None) -> int:
         return 4
     # Native plugin must be requested explicitly; never inherit a headless QPA.
     os.environ["QT_QPA_PLATFORM"] = "windows"
-    from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QTabWidget
+    from PySide6.QtWidgets import (
+        QApplication, QCheckBox, QComboBox, QLabel, QPushButton, QSpinBox, QTabWidget,
+    )
     from nature_video_studio.trial_gui import build_window
     from nature_video_studio.version_identity import V2_IDENTITY
 
@@ -91,6 +93,21 @@ def main(argv: list[str] | None = None) -> int:
     ):
         print("C024_WINDOWS_SEARCH_TABS_FAIL: separate controls missing")
         return 14
+
+    # C026: assert real native Qt window contains all four precise presets
+    # and an independently optional maximum bound.
+    minimum = window.findChild(QComboBox, "longMinDurationPreset")
+    maximum_enabled = window.findChild(QCheckBox, "longMaxDurationEnabled")
+    maximum = window.findChild(QSpinBox, "longMaxDurationMinutes")
+    if (
+        minimum is None or maximum_enabled is None or maximum is None
+        or [minimum.itemData(i) for i in range(minimum.count())]
+        != [180, 600, 1200, 1800]
+        or minimum.currentData() != 180
+        or maximum_enabled.isChecked() or maximum.isEnabled()
+    ):
+        print("C026_WINDOWS_PRESETS_AND_MAX_FAIL")
+        return 15
 
     handle = int(window.winId())
     if not handle or not ctypes.windll.user32.IsWindow(handle):
@@ -141,6 +158,9 @@ def main(argv: list[str] | None = None) -> int:
         "c024_provider_search": "NOT_CONNECTED",
         "c025_duration_self_check_button": "PRESENT",
         "c025_live_source_duration_verification": "NOT_CONNECTED",
+        "c026_min_original_presets_seconds": [180, 600, 1200, 1800],
+        "c026_separate_optional_max_limit": "PRESENT_OFF_BY_DEFAULT",
+        "c026_live_api_filters": "NOT_CONNECTED",
         "real_search_download_preview_composer": "NOT_IMPLEMENTED",
         "user_v1_data_validation": "NOT_TESTED",
     }
@@ -154,6 +174,8 @@ def main(argv: list[str] | None = None) -> int:
     if window.isVisible():
         print("C022_NATIVE_GUI_FAIL: close button did not close window")
         return 13
+    print("C026_WINDOWS_NATIVE_DURATION_PRESETS_PASS")
+    print("C026_LIVE_PROVIDER_FILTER: SKIP_NOT_CONNECTED")
     print("C024_WINDOWS_NATIVE_SEARCH_TABS_PASS")
     print("C024_LIVE_SOURCE_SEARCH: SKIP_NOT_IMPLEMENTED")
     print("C022_NATIVE_WINDOWS_GUI_CAPTURE_PASS")

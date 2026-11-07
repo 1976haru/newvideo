@@ -10,14 +10,15 @@ import asyncio
 
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
-    QAbstractItemView, QComboBox, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QTabWidget, QTableWidget, QTableWidgetItem,
+    QAbstractItemView, QCheckBox, QComboBox, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMessageBox, QPushButton, QSpinBox, QTabWidget, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget,
 )
 
 from .models import ResolutionMode, SearchMode
 from .search_mode_state import (
-    LaneStatus, SORT_LABELS, SORT_OPTIONS, SearchModeSession, SearchTicket,
+    LaneStatus, LONG_DURATION_PRESETS_SECONDS, SORT_LABELS, SORT_OPTIONS,
+    SearchModeSession, SearchTicket,
 )
 from .source_adapter import SearchQuery
 from .duration_self_check import run_duration_self_check
@@ -99,6 +100,45 @@ class _LanePane(QWidget):
         filter_row.addWidget(self.resolution, 1)
         layout.addLayout(filter_row)
 
+        if mode == SearchMode.LONG_ORIGINAL:
+            duration_row = QHBoxLayout()
+            duration_row.addWidget(QLabel("최소 원본 길이"))
+            self.min_duration = QComboBox()
+            self.min_duration.setObjectName("longMinDurationPreset")
+            for seconds in LONG_DURATION_PRESETS_SECONDS:
+                self.min_duration.addItem(f"{seconds // 60}분 이상", seconds)
+            duration_row.addWidget(self.min_duration)
+
+            self.max_duration_enabled = QCheckBox("최대 길이 제한")
+            self.max_duration_enabled.setObjectName("longMaxDurationEnabled")
+            self.max_duration_enabled.setChecked(False)
+            duration_row.addWidget(self.max_duration_enabled)
+
+            self.max_duration_minutes = QSpinBox()
+            self.max_duration_minutes.setObjectName("longMaxDurationMinutes")
+            self.max_duration_minutes.setRange(1, 1440)
+            self.max_duration_minutes.setSingleStep(1)
+            self.max_duration_minutes.setValue(60)
+            self.max_duration_minutes.setSuffix("분")
+            self.max_duration_minutes.setEnabled(False)
+            duration_row.addWidget(self.max_duration_minutes)
+            duration_row.addStretch()
+            layout.addLayout(duration_row)
+
+            self.duration_summary = QLabel()
+            self.duration_summary.setObjectName("longDurationSummary")
+            self.duration_summary.setWordWrap(True)
+            layout.addWidget(self.duration_summary)
+            self.min_duration.currentIndexChanged.connect(
+                self._update_duration_summary)
+            self.max_duration_enabled.toggled.connect(
+                self.max_duration_minutes.setEnabled)
+            self.max_duration_enabled.toggled.connect(
+                self._update_duration_summary)
+            self.max_duration_minutes.valueChanged.connect(
+                self._update_duration_summary)
+            self._update_duration_summary()
+
         count_row = QHBoxLayout()
         self.count = QLabel()
         self.count.setObjectName(prefix + "ResultCount")
@@ -137,6 +177,21 @@ class _LanePane(QWidget):
         self.results.setSortingEnabled(False)
         layout.addWidget(self.results, 1)
         self.refresh()
+
+    def _update_duration_summary(self, *_):
+        if self.mode != SearchMode.LONG_ORIGINAL:
+            return
+        minimum_minutes = self.min_duration.currentData() // 60
+        if not self.max_duration_enabled.isChecked():
+            value = f"선택 조건: {minimum_minutes}분 이상 / 최대 제한 없음"
+        else:
+            maximum = self.max_duration_minutes.value()
+            if maximum < minimum_minutes:
+                value = (f"조건 오류: 최대 {maximum}분은 최소 {minimum_minutes}분보다 짧습니다. "
+                         "검색 요청을 보내지 않습니다.")
+            else:
+                value = f"선택 조건: {minimum_minutes}~{maximum}분 (양 끝 포함)"
+        self.duration_summary.setText(value + " · 검색 버튼 클릭 시 적용")
 
     def refresh(self) -> None:
         lane = self.session.lane(self.mode)
@@ -230,10 +285,24 @@ class SearchTabsWidget(QWidget):
     def request_search(self, mode: SearchMode) -> None:
         pane = self.panes[mode]
         try:
+            options = {}
+            if mode == SearchMode.LONG_ORIGINAL:
+                options = {
+                    "min_original_duration_seconds": pane.min_duration.currentData(),
+                    "max_original_duration_seconds": (
+                        pane.max_duration_minutes.value() * 60
+                        if pane.max_duration_enabled.isChecked() else None
+                    ),
+                }
             ticket = self.session.begin_search(
-                mode, pane.query.text(), pane.resolution.currentData())
-        except ValueError:
-            pane.status_label.setText("이 탭의 검색어를 입력하세요.")
+                mode, pane.query.text(), pane.resolution.currentData(), **options)
+        except ValueError as exc:
+            # Safe, fixed user-facing messages; do not show raw provider data.
+            if not pane.query.text().strip():
+                pane.status_label.setText("이 탭의 검색어를 입력하세요.")
+            else:
+                pane.status_label.setText(
+                    "길이 조건 오류: 최대 길이는 최소 길이보다 길거나 같아야 합니다.")
             return
         pane.refresh()
         if self.coordinator is None:

@@ -37,6 +37,9 @@ SORT_OPTIONS: dict[SearchMode, tuple[LaneSort, ...]] = {
     SearchMode.SHORT_COMPOSER: (LaneSort.SHORT_DURATION, LaneSort.SHORT_QUALITY),
 }
 
+# C026. Exact second-based query values; four UI presets, independent upper bound.
+LONG_DURATION_PRESETS_SECONDS = (180, 600, 1200, 1800)
+
 SORT_LABELS = {
     LaneSort.LONG_DURATION: "원본 길이 긴 순",
     LaneSort.LONG_QUALITY: "4K·풍경 적합도 우선",
@@ -59,6 +62,8 @@ class LaneState:
     sort: LaneSort
     text: str = ""
     resolution: ResolutionMode = ResolutionMode.FOUR_K_PREFERRED
+    min_original_duration_seconds: float = 180.0
+    max_original_duration_seconds: float | None = None
     status: LaneStatus = LaneStatus.NOT_SEARCHED
     results: tuple[MediaCandidate, ...] = ()
     rejected: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -85,7 +90,13 @@ class LaneState:
             return "일부 제공처가 실패했습니다. 표시된 건수는 부분 결과입니다."
         if self.status == LaneStatus.EMPTY:
             if self.mode == SearchMode.LONG_ORIGINAL:
-                return "확인된 180초 이상 원본 없음 (0건). 짧은 영상은 자동 대체하지 않습니다."
+                minimum = f"{self.min_original_duration_seconds / 60:g}분"
+                if self.max_original_duration_seconds is None:
+                    span = minimum + " 이상"
+                else:
+                    maximum = f"{self.max_original_duration_seconds / 60:g}분"
+                    span = minimum + " ~ " + maximum
+                return f"확인된 {span} 연속 원본 없음 (0건). 짧은 영상은 자동 대체하지 않습니다."
             return "확인된 5~120초 클립 없음 (0건). 장편 결과는 섞이지 않습니다."
         return "해당 탭에서 검색한 검증 후보만 표시합니다."
 
@@ -141,19 +152,32 @@ class SearchModeSession:
         mode: SearchMode,
         text: str,
         resolution: ResolutionMode = ResolutionMode.FOUR_K_PREFERRED,
+        *,
+        min_original_duration_seconds: float = 180.0,
+        max_original_duration_seconds: float | None = None,
     ) -> SearchTicket:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("검색어를 입력하세요.")
+        mode = SearchMode(mode)
+        # Validate before changing any lane state: invalid upper bounds must
+        # not erase the user's previous results or fire an adapter request.
+        criteria = SearchCriteria(
+            mode=mode,
+            resolution=ResolutionMode(resolution),
+            min_original_duration_seconds=min_original_duration_seconds,
+            max_original_duration_seconds=max_original_duration_seconds,
+        )
         lane = self.lane(mode)
         lane.sequence += 1
         lane.text = text.strip()
-        lane.resolution = ResolutionMode(resolution)
+        lane.resolution = criteria.resolution
+        lane.min_original_duration_seconds = criteria.min_original_duration_seconds
+        lane.max_original_duration_seconds = criteria.max_original_duration_seconds
         lane.results = ()
         lane.rejected = {}
         lane.provider_codes = ()
         lane.status = LaneStatus.SEARCHING
-        return SearchTicket(mode, lane.sequence, lane.text,
-                            SearchCriteria(mode=mode, resolution=lane.resolution))
+        return SearchTicket(mode, lane.sequence, lane.text, criteria)
 
     def _matches(self, ticket: SearchTicket) -> bool:
         lane = self.lane(ticket.mode)
@@ -181,8 +205,12 @@ class SearchModeSession:
         if not status_codes or all(code == "MODE_UNSUPPORTED" for code in status_codes):
             lane.status = LaneStatus.UNAVAILABLE
             return True
-        accepted = tuple(c for c in outcome.accepted if
-                         self._matches_mode(c, ticket.mode))
+        # Re-apply this request's full min/max even for a malformed provider
+        # or mocked coordinator result. Do not revert to the default 180s.
+        accepted = tuple(
+            c for c in outcome.accepted
+            if duration_reason(c, ticket.criteria) is None
+        )
         lane.results = ordered_results(accepted, lane.sort)
         ok_count = status_codes.count("OK")
         failures = any(code not in ("OK", "MODE_UNSUPPORTED") for code in status_codes)
@@ -196,5 +224,5 @@ class SearchModeSession:
 
     @staticmethod
     def _matches_mode(candidate: MediaCandidate, mode: SearchMode) -> bool:
-        """Defensive second check even if a mocked or bad backend bypasses the filter."""
+        """Legacy mode-only helper; use ticket criteria for real result filtering."""
         return duration_reason(candidate, SearchCriteria(mode=mode)) is None
