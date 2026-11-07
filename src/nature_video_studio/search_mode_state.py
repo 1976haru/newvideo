@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .filtering import SearchCriteria
+from .filtering import SearchCriteria, duration_reason
 from .models import MediaCandidate, ResolutionMode, SearchMode
 from .search_coordinator import SearchOutcome
 
@@ -197,9 +197,4 @@ class SearchModeSession:
     @staticmethod
     def _matches_mode(candidate: MediaCandidate, mode: SearchMode) -> bool:
         """Defensive second check even if a mocked or bad backend bypasses the filter."""
-        d = candidate.duration_seconds
-        if d is None or not candidate.original_duration_verified:
-            return False
-        if mode == SearchMode.LONG_ORIGINAL:
-            return d >= 180
-        return 5 <= d <= 120
+        return duration_reason(candidate, SearchCriteria(mode=mode)) is None

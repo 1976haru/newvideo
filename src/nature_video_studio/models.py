@@ -47,6 +47,10 @@ class MediaCandidate:
     license_url: str = ""
     nature_relevance_verified: bool = False
     notes: str = ""
+    # Explicit assembly provenance: a stitched timeline is NEVER one original
+    # even if its total duration is >=180s or bad provider data sets verified=True.
+    # Future adapters must set verified=False when provenance cannot be confirmed.
+    is_assembled: bool = False
 
     @property
     def key(self) -> str:

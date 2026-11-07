@@ -87,6 +87,7 @@ def main(argv: list[str] | None = None) -> int:
         or window.findChild(QPushButton, "shortSwitchMode") is None
         or window.findChild(QLabel, "longResultCount") is None
         or window.findChild(QLabel, "shortResultCount") is None
+        or window.findChild(QPushButton, "longDurationSelfCheck") is None
     ):
         print("C024_WINDOWS_SEARCH_TABS_FAIL: separate controls missing")
         return 14
@@ -138,6 +139,8 @@ def main(argv: list[str] | None = None) -> int:
         "visible_native_titlebar_text_ocr": "NOT_TESTED",
         "c024_search_tabs": ["3분 이상 원본", "짧은 영상 조합"],
         "c024_provider_search": "NOT_CONNECTED",
+        "c025_duration_self_check_button": "PRESENT",
+        "c025_live_source_duration_verification": "NOT_CONNECTED",
         "real_search_download_preview_composer": "NOT_IMPLEMENTED",
         "user_v1_data_validation": "NOT_TESTED",
     }

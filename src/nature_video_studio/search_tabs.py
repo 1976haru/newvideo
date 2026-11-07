@@ -11,7 +11,7 @@ import asyncio
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView, QComboBox, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QPushButton, QTabWidget, QTableWidget, QTableWidgetItem,
+    QLineEdit, QMessageBox, QPushButton, QTabWidget, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget,
 )
 
@@ -20,6 +20,7 @@ from .search_mode_state import (
     LaneStatus, SORT_LABELS, SORT_OPTIONS, SearchModeSession, SearchTicket,
 )
 from .source_adapter import SearchQuery
+from .duration_self_check import run_duration_self_check
 
 
 class _SearchThread(QThread):
@@ -103,6 +104,10 @@ class _LanePane(QWidget):
         self.count.setObjectName(prefix + "ResultCount")
         count_row.addWidget(self.count)
         count_row.addStretch()
+        if mode == SearchMode.LONG_ORIGINAL:
+            self.duration_check_button = QPushButton("C025 180초 규칙 검사")
+            self.duration_check_button.setObjectName("longDurationSelfCheck")
+            count_row.addWidget(self.duration_check_button)
         self.switch_button = QPushButton(
             "짧은 영상 조합 탭으로 전환"
             if mode == SearchMode.LONG_ORIGINAL else
@@ -187,6 +192,26 @@ class SearchTabsWidget(QWidget):
             pane.sort_choice.currentIndexChanged.connect(
                 lambda index, target=mode: self._change_sort(target))
         self.tabs.currentChanged.connect(self._tab_changed)
+        self.panes[SearchMode.LONG_ORIGINAL].duration_check_button.clicked.connect(
+            self.show_duration_self_check)
+
+    def show_duration_self_check(self) -> None:
+        """Offline synthetic cases only; this never calls providers or changes counts."""
+        cases = run_duration_self_check()
+        lines = [
+            ("PASS" if c.passed else "FAIL") + " · " + c.label + " → " +
+            ("장편 포함" if c.accepted else "장편 제외")
+            for c in cases
+        ]
+        lines.insert(0, "테스트용 합성 데이터 검사입니다. 실제 제공처 검색 결과가 아닙니다.")
+        lines.insert(1, "")
+        lines.append("")
+        lines.append(f"판정: {sum(c.passed for c in cases)}/{len(cases)} PASS")
+        message = "\n".join(lines)
+        if all(c.passed for c in cases):
+            QMessageBox.information(self, "C025 180초 기준 자가검사", message)
+        else:
+            QMessageBox.warning(self, "C025 180초 기준 자가검사 실패", message)
 
     def _tab_changed(self, index: int) -> None:
         mode = (SearchMode.LONG_ORIGINAL if index == 0 else SearchMode.SHORT_COMPOSER)

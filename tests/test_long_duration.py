@@ -68,3 +68,29 @@ def test_results_are_dedicated_to_long_lane():
     accepted, rejected = filter_candidates([item(40,name="short"), item(180,name="long")], SearchCriteria())
     assert [x.source_id for x in accepted] == ["long"]
     assert "fixture:short" in rejected
+
+
+def test_c025_assembled_exactly_180_is_not_single_original():
+    assembled = MediaCandidate(
+        provider="fixture", source_id="clip-60x3",
+        source_url="https://example.org/montage",
+        title="three clips concatenated", duration_seconds=180,
+        original_duration_verified=True,
+        renditions=(Rendition(3840, 2160),),
+        nature_relevance_verified=True,
+        is_assembled=True,
+    )
+    allowed, rejected = filter_candidates([assembled, item(180, name="real-180")], SearchCriteria())
+    assert [candidate.source_id for candidate in allowed] == ["real-180"]
+    assert "조합 영상은 연속 원본이 아님" in rejected[assembled.key]
+
+
+@pytest.mark.parametrize("duration", [float("nan"), float("inf"), -float("inf"), "180", True])
+def test_c025_invalid_duration_metadata_cannot_enter_long_lane(duration):
+    assert duration_reason(item(duration), SearchCriteria()) == "원본 길이 미확인"
+
+
+@pytest.mark.parametrize("minimum", [179, 0, -1, float("nan"), float("inf")])
+def test_c025_query_cannot_lower_or_bypass_180_second_minimum(minimum):
+    with pytest.raises(ValueError):
+        SearchCriteria(min_original_duration_seconds=minimum)

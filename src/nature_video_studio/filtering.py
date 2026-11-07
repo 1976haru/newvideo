@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Real
+import math
+
 from .models import MediaCandidate, ResolutionMode, SearchMode
 
 
@@ -13,15 +16,31 @@ class SearchCriteria:
     resolution: ResolutionMode = ResolutionMode.FOUR_K_PREFERRED
 
     def __post_init__(self) -> None:
-        if self.min_original_duration_seconds < 0:
-            raise ValueError("min duration must not be negative")
-        if self.max_original_duration_seconds is not None and self.max_original_duration_seconds < self.min_original_duration_seconds:
-            raise ValueError("max duration must be >= min duration")
+        # Never let client-supplied criteria relax the 180-second LONG floor.
+        if not _finite_duration(self.min_original_duration_seconds) or self.min_original_duration_seconds < 180:
+            raise ValueError("long-original minimum must be a finite number >= 180")
+        if self.max_original_duration_seconds is not None:
+            if not _finite_duration(self.max_original_duration_seconds):
+                raise ValueError("max duration must be finite")
+            if self.max_original_duration_seconds < self.min_original_duration_seconds:
+                raise ValueError("max duration must be >= min duration")
+
+
+def _finite_duration(value: object) -> bool:
+    """Reject NaN/inf, strings, booleans and malformed provider numbers."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        return False
+    try:
+        return math.isfinite(value)
+    except (TypeError, ValueError, OverflowError):
+        return False
 
 
 def duration_reason(candidate: MediaCandidate, criteria: SearchCriteria) -> str | None:
     if criteria.mode == SearchMode.LONG_ORIGINAL:
-        if candidate.duration_seconds is None or not candidate.original_duration_verified:
+        if candidate.is_assembled:
+            return "조합 영상은 연속 원본이 아님"
+        if not candidate.original_duration_verified or not _finite_duration(candidate.duration_seconds):
             return "원본 길이 미확인"
         if candidate.duration_seconds < criteria.min_original_duration_seconds:
             return "원본 길이 미달"
@@ -29,7 +48,9 @@ def duration_reason(candidate: MediaCandidate, criteria: SearchCriteria) -> str 
             return "원본 길이 초과"
         return None
     if criteria.mode == SearchMode.SHORT_COMPOSER:
-        if candidate.duration_seconds is None or not candidate.original_duration_verified:
+        if candidate.is_assembled:
+            return "조합 영상은 개별 클립이 아님"
+        if not candidate.original_duration_verified or not _finite_duration(candidate.duration_seconds):
             return "클립 길이 미확인"
         if candidate.duration_seconds <= 0:
             return "비정상적 길이"
