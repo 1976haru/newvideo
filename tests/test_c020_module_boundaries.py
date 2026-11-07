@@ -30,7 +30,7 @@ SERVICE_FILES = (
 # and forbid importing Qt/network/SQLite/rendering from these boundaries.
 INTERNAL_ALLOWED = {
     "source_adapter": {"filtering", "models"},
-    "search_coordinator": {"filtering", "models", "source_adapter"},
+    "search_coordinator": {"filtering", "models", "source_adapter", "provider_policy"},
     "preview_service": {"preview"},
     "rights_review": {"models", "rights"},
     "download_queue": {"rights", "service_errors", "network_security"},
@@ -154,7 +154,8 @@ def test_c020_invalid_adapter_result_is_not_accepted():
         async def search(self, query):
             return SearchPage("Wrong provider", (scenic("Pexels", "a", 250),))
     result = asyncio.run(SearchCoordinator([
-        WrongProvider("Pexels", {SearchMode.LONG_ORIGINAL})
+        # Use a real long-capable fixture: Pexels must be blocked BEFORE API calls.
+        WrongProvider("Internet Archive", {SearchMode.LONG_ORIGINAL})
     ]).search(SearchQuery("lake")))
     assert not result.accepted
     assert result.providers[0].code == "INVALID_PROVIDER_RESULT"
