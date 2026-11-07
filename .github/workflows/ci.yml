@@ -42,6 +42,8 @@ jobs:
         run: python -m pytest -q -k no_silent_fallback
       - name: C028 Pexels 120s clip-only policy and long-source exclusion gate
         run: python -m pytest -q -k pexels_lane
+      - name: C029 Pixabay video duration/large rendition/ffprobe fixture gate
+        run: python -m pytest -q -k pixabay_video_fixture
       - run: python -m pytest -q
 
   c005-video-backup:
