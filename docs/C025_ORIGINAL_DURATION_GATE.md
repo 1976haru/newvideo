@@ -69,3 +69,25 @@ GitHub Actions run 42336162238 / commit 106d6c08: Windows 및 Ubuntu × Python 3
 - Draft PR #1 유지, feature/v2-research-rebuild만 수정, 사용자 데이터 삭제/강제 푸시 없음.
 
 **전체 진행률:** C025 코어 수용 3/3 포함 체크리스트 **19/162개 = 약 11.7%** (항목 수 기준, 기능별 가중 진행률 미산출). 사용자 PC의 C025 버튼 조작은 별도 대기.
+
+
+## 6. 기존 사용자 Windows V2 설치본 적용 확인 (2026-11-07)
+
+사용자가 본 대화에서 기존 동일 V2 설치본에 대해 다음 업데이트 명령을 **직접 실행한 출력**을 공유함.
+
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'D:\NVS_V2_Trial_App\C011_Titlebar_10206483\NVS_V2_Updater.ps1' -Mode Update -TargetCommit '106d6c08f4247e54bbbff3d1d3d7a917b4b4703c'
+
+사용자가 보고한 실제 로그:
+
+- `NVS_V2_FETCH_PINNED_COMMIT`
+- `C011_GUI_SMOKE_PASS` 두 번, `C024_LOCAL_SEARCH_TABS_SMOKE_PASS` 반복
+- `NVS_V2_EXISTING_INSTALL_UPDATE_PASS`
+- `ACTIVE_COMMIT: 106d6c08f4247e54bbbff3d1d3d7a917b4b4703c`
+- `START_CMD: D:\NVS_V2_Trial_App\C011_Titlebar_10206483\NVS_V2_Start.cmd`
+- `V1_DATA_KEYS_MEDIA_TOUCHED: NO` (스크립트 출력이며 실제 사용자 데이터 전후 파일 해시 독립 검증이 아님)
+
+**판정: 기존 V2 단일 설치본 코드 업데이트 PASS (사용자 제공 로그 기준).** 새 사용자용 프로그램 설치 폴더를 생성하지 않았다. 기존 C024 화면과 C025의 새 180초 자가검사 버튼을 포함하는 코드 SHA가 적용되었다.
+
+**C025 GUI 버튼 클릭 결과는 아직 미확인:** 사용자가 '3분 이상 원본' 탭의 `C025 180초 규칙 검사`를 클릭하여 `8/8 PASS`를 확인한 로그·응답·화면은 아직 전달되지 않았으므로 실제 사용자 PC의 **자가검사 PASS로 표기 금지**. 사용자 확인 후 별도 기록. GitHub CI 3/3 수용 점수와 실제 PC 클릭 증빙은 구분 유지.
+
+코드 원본의 다운로드와 스모크에 성공한 것은 실제 제공처 검색·영상 재생·다운로드·권리 검증의 실행 증거가 아니다.
