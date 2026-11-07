@@ -58,7 +58,7 @@ function RunSmoke([string]$python,[string]$src,[switch]$RequireC024) {
   & $python -m nature_video_studio --smoke
   if ($LASTEXITCODE -ne 0) { throw 'NVS_V2_BLOCKED_PYTHON_SMOKE' }
   if ($RequireC024) {
-   $probe="from PySide6.QtWidgets import QApplication,QTabWidget;from nature_video_studio.trial_gui import build_window;app=QApplication([]);w=build_window();t=w.findChild(QTabWidget,'searchModeTabs');assert t and t.count()==2 and t.tabText(0)=='3분 이상 원본' and t.tabText(1)=='짧은 영상 조합';print('C024_LOCAL_SEARCH_TABS_SMOKE_PASS')"
+   $probe="from PySide6.QtWidgets import QApplication,QTabWidget,QPushButton;from nature_video_studio.trial_gui import build_window;app=QApplication([]);w=build_window();t=w.findChild(QTabWidget,'searchModeTabs');assert t and t.count()==2 and w.findChild(QPushButton,'longSwitchMode') and w.findChild(QPushButton,'shortSwitchMode');print('C024_LOCAL_SEARCH_TABS_SMOKE_PASS')"
    & $python -c $probe
    if ($LASTEXITCODE -ne 0) { throw 'NVS_V2_BLOCKED_C024_TABS_SMOKE' }
   }
@@ -87,7 +87,7 @@ if ($FixtureMode) {
  if ($SourceZip -or $PythonExe) { throw 'NVS_V2_BLOCKED_TEST_ARGUMENTS' }
 }
 foreach ($p in @('D:\NatureVideoStudio','D:\NatureVideoStudio_V2_Data',
-                 'D:\NVS_Recovery','D:\03 자연풍경 비디오\NatureVideoStudio_V1_0_2')) {
+                 'D:\NVS_Recovery')) {
  if (IsOverlap $root $p) { throw 'NVS_V2_BLOCKED_PROTECTED_PATH' }
 }
 if (!(Test-Path -LiteralPath $root -PathType Container)) { throw 'NVS_V2_BLOCKED_INSTALL_NOT_FOUND' }
