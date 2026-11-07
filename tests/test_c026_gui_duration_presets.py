@@ -23,7 +23,7 @@ def test_duration_preset_gui_preset_and_max_independent_with_unavailable_provide
     Qt = pytest.importorskip("PySide6.QtWidgets")
     app = Qt.QApplication.instance() or Qt.QApplication(["C026"])
     from nature_video_studio.trial_gui import build_window
-    window = build_window()
+    window = build_window(live_providers=False)
     window.show()
     app.processEvents()
 
