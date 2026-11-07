@@ -91,7 +91,7 @@ def test_pixabay_video_fixture_exact_original_duration_modes(duration, long_ok, 
 
 @pytest.mark.parametrize("value", [
     None, False, True, "180", "", -1, 0, float("inf"), float("-inf"),
-    float("nan"), [], {}, 0.0,
+    float("nan"), [], {}, 0.0, 10**1000,
 ])
 def test_pixabay_video_fixture_unverified_malformed_duration_fails_closed(value):
     c = parse(fixture_hit(value))
@@ -119,6 +119,7 @@ def test_pixabay_video_fixture_documented_large_is_not_always_4k():
     ("url", "https://evil.com/file.mp4"),
     ("url", "https://cdn.pixabay.com.evil.com/file.mp4"),
     ("url", "https://cdn.pixabay.com@evil.com/video.mp4"),
+    ("url", "https://cdn.pixabay.com/video/preview.jpg"),
     ("size", 0), ("size", None), ("size", "12000"),
     ("width", None), ("width", False), ("width", "3840"),
     ("height", 0), ("height", "2160"),
