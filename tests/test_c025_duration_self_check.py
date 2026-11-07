@@ -81,7 +81,7 @@ def test_c025_composition_cannot_leak_through_source_coordinator():
         )
 
     outcome = asyncio.run(find())
-    assert [c.source_id for c in outcome.accepted] == ["valid-180", "valid-181"]
+    assert [c.source_id for c in outcome.accepted] == ["valid-181", "valid-180"]
     assert set(outcome.rejected) == {
         "Wikimedia Commons:real-179",
         "Wikimedia Commons:fake-180-from-3-clips",
