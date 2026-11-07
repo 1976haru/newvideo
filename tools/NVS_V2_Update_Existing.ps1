@@ -92,6 +92,7 @@ foreach ($p in @('D:\NatureVideoStudio','D:\NatureVideoStudio_V2_Data',
 }
 if (!(Test-Path -LiteralPath $root -PathType Container)) { throw 'NVS_V2_BLOCKED_INSTALL_NOT_FOUND' }
 AssertNoLink $root
+AssertNoLink (Split-Path -Path $root -Parent)
 $top=Join-Path $root 'source'
 $base=Join-Path $top ('newvideo-'+$oldCommit)
 AssertNoLink $top
@@ -116,7 +117,8 @@ if ($Mode -eq 'Launch') {
 if (!$FixtureMode) {
  $running=@(Get-CimInstance Win32_Process -Filter "name = 'python.exe' or name = 'pythonw.exe'" -ErrorAction Stop)
  foreach ($proc in $running) {
-  if ([string]$proc.CommandLine -and [string]$proc.CommandLine.IndexOf($root,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
+  $processCommand=[string]$proc.CommandLine
+  if ($processCommand -and $processCommand.IndexOf($root,[StringComparison]::OrdinalIgnoreCase) -ge 0) {
    throw 'NVS_V2_BLOCKED_CLOSE_APP_FIRST'
   }
  }
@@ -144,6 +146,7 @@ if ($Mode -eq 'Rollback') {
 if ($TargetCommit -notmatch '^[0-9a-fA-F]{40}$') { throw 'NVS_V2_BLOCKED_UNPINNED_SHA' }
 if (Test-Path $marker) {
  if ((Get-Content -LiteralPath $marker -TotalCount 1).Trim() -eq $TargetCommit) {
+  RunSmoke $python $active -RequireC024
   Write-Output 'NVS_V2_ALREADY_UPDATED'
   if (!$NoLaunch) { RunGUI $python $active }
   exit 0
@@ -185,7 +188,6 @@ try {
  Move-Item -LiteralPath $stage -Destination $active -ErrorAction Stop
  $newMoved=$true
  RunSmoke $python $active -RequireC024
- [IO.File]::WriteAllText($marker,$TargetCommit+[char]13+[char]10,[Text.Encoding]::ASCII)
  $self=Join-Path $root 'NVS_V2_Updater.ps1'
  if ($PSCommandPath -ne $self) { Copy-Item -LiteralPath $PSCommandPath -Destination $self -ErrorAction Stop }
  $cmd=Join-Path $root 'NVS_V2_Start.cmd'
@@ -193,6 +195,7 @@ try {
    'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%ROOT%NVS_V2_Updater.ps1" -Mode Launch',
    'exit /b %ERRORLEVEL%')
  [IO.File]::WriteAllText($cmd,($lines -join ([char]13+[char]10))+[char]13+[char]10,[Text.Encoding]::ASCII)
+ [IO.File]::WriteAllText($marker,$TargetCommit+[char]13+[char]10,[Text.Encoding]::ASCII)
  Write-Output 'NVS_V2_EXISTING_INSTALL_UPDATE_PASS'
  Write-Output 'C024_LOCAL_SEARCH_TABS_SMOKE_PASS'
  Write-Output ('ACTIVE_COMMIT: '+$TargetCommit)
@@ -214,6 +217,13 @@ try {
 } finally {
  if ($ownsDownload -and (Test-Path -LiteralPath $download)) {
   Remove-Item -LiteralPath $download -Force -ErrorAction SilentlyContinue
+ }
+ # Clean ONLY temporary code unpacked by this invocation inside existing V2.
+ if ((Test-Path -LiteralPath $unpack) -and $unpack.StartsWith($base+'',[StringComparison]::OrdinalIgnoreCase)) {
+  Remove-Item -LiteralPath $unpack -Recurse -Force -ErrorAction SilentlyContinue
+ }
+ if ((Test-Path -LiteralPath $stage) -and $stage.StartsWith($base+'',[StringComparison]::OrdinalIgnoreCase)) {
+  Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
  }
 }
 if (!$NoLaunch) { RunGUI $python $active }
