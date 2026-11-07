@@ -8,6 +8,7 @@ This adapter does NOT prove that the file is unedited or rights-cleared.
 from __future__ import annotations
 
 import asyncio
+import json
 from html import unescape
 from html.parser import HTMLParser
 import math
@@ -233,8 +234,6 @@ def _fetch_official(params: dict[str, str]) -> dict:
                 body.extend(chunk)
                 if len(body) > MAX_BODY_BYTES:
                     raise CommonsAdapterError("COMMONS_RESPONSE_TOO_LARGE")
-            payload = response.json() if False else None
-            import json
             payload = json.loads(body.decode("utf-8"))
             if not isinstance(payload, dict):
                 raise CommonsAdapterError("COMMONS_INVALID_RESPONSE")
