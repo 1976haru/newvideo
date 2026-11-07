@@ -293,3 +293,15 @@ def test_security_no_automatic_download_or_real_credential_access(monkeypatch):
         "Internet Archive")
     with pytest.raises(FeatureUnavailable):
         asyncio.run(UnavailableDownloadQueue().enqueue(approved))
+
+
+def test_security_qt_backend_error_display_uses_safe_classifier_not_raw_detail():
+    """Static headless guard; real Qt playback remains an R2 test."""
+    from pathlib import Path
+    import nature_video_studio
+    file = Path(nature_video_studio.__file__).parent / "local_player.py"
+    source = file.read_text(encoding="utf-8")
+    compile(source, str(file), "exec")
+    assert "classify_playback_failure(details or \"\")" in source
+    assert "details or str(error)" not in source
+    assert "diagnosis.code" in source and "diagnosis.message" in source
