@@ -2,7 +2,7 @@
 
 Windows desktop project for finding **legally reusable nature footage**, prioritizing original takes **>=180 seconds**, previewing results, and curating 15-song playlist video backgrounds.
 
-**Status:** The V2 trial GUI now contains **C024 separate long-original/short-clip tabs** and a **C025 offline 180-second duration self-check button**. Live provider search, real footage preview/playback, download, editing, and the release Windows EXE remain NOT implemented. The legacy V1.0.2 remains separate and must not be overwritten.
+**Status (2026-11-07):** The existing V2 trial GUI includes **real user-clicked Wikimedia Commons long-video and Pixabay video API search**, separate long/short filters, per-result rights/source details and asynchronous poster retrieval. Pixabay requires an API key; missing credentials or provider errors are visible rather than fabricated zero hits. Real footage file-duration/4K ffprobe, video playback, downloads, editing and release Windows EXE are **NOT implemented/NOT TESTED**. Automated mock API/Qt tests are not proof of actual provider results on the user's PC. V1.0.2 and user data remain separate.
 
 ## Principles
 1. Never imply that a <3-minute stock video is an original 3-minute take.
@@ -28,6 +28,10 @@ Python 3.11+ · PySide6 · Qt Multimedia (QMediaPlayer) · requests/httpx · SQL
 No provider credentials or downloaded media are committed.
 
 Project owner: 1976haru. This branch is the V2 design baseline, not V2 feature completion.
+
+## R1 live-search Windows verification
+
+The same existing V2 window now uses official source APIs on an explicit Search click. For actual GUI testing, source/rights display and honest failure handling, see [R1 real Windows search gate](docs/R1_LIVE_WINDOWS_SEARCH_GATE.md). No browsing, downloads, keyring writes or user-library mutations occur on launch.
 
 ## C011 - versioned V2 trial window
 
