@@ -139,6 +139,13 @@ _AUTH_HEADER = re.compile(
     r"(?P<value>[^\r\n]+)"
 )
 _BEARER = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]+={0,2}")
+_JSON_SECRET = re.compile(
+    r'(?i)(?P<prefix>"(?:api_key|apikey|access_token|refresh_token|token|'
+    r'authorization|password|secret|signature|key)"\s*:\s*")'
+    r'(?P<secret>[^"]*)(?P<suffix>")'
+)
+_URL_IN_LOG = re.compile(r'(?i)\bhttps?://[^\s<>"\x27]+')
+
 
 
 def redact_sensitive(value: object) -> str:
@@ -146,6 +153,11 @@ def redact_sensitive(value: object) -> str:
     if not isinstance(value, str):
         return "[REDACTED NON-TEXT]"
     output = _AUTH_HEADER.sub(lambda m: m.group("name") + "[REDACTED]", value)
+    # Never emit a full query string, even with unrecognized signed-URL keys.
+    output = _URL_IN_LOG.sub("[URL_REDACTED]", output)
     output = _BEARER.sub("Bearer [REDACTED]", output)
+    output = _JSON_SECRET.sub(
+        lambda m: m.group("prefix") + "[REDACTED]" + m.group("suffix"), output
+    )
     output = _SECRET_PARAMS.sub(lambda m: m.group("name") + "[REDACTED]", output)
     return output
