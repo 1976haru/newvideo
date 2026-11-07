@@ -50,10 +50,21 @@ class SearchCoordinator:
             if any(c.provider != adapter.name for c in page.candidates):
                 return None, ProviderStatus(adapter.name, "INVALID_PROVIDER_RESULT")
             return page, ProviderStatus(adapter.name, "OK", len(page.candidates))
-        except Exception:
-            # Never print exception: may contain API keys, URLs and response bodies.
-            # asyncio.CancelledError is BaseException and is deliberately propagated.
-            return None, ProviderStatus(adapter.name, "PROVIDER_FAILED")
+        except Exception as exc:
+            # Stable, allowlisted diagnostics only; never echo URLs, API tokens
+            # or response/exception text to Qt, logs or the end user.
+            safe = {
+                "API_KEY_MISSING", "KEYRING_UNAVAILABLE", "KEYRING_ERROR",
+                "PIXABAY_RATE_LIMIT", "PIXABAY_HTTP_ERROR",
+                "PIXABAY_INVALID_RESPONSE", "PIXABAY_NETWORK_ERROR",
+                "COMMONS_RATE_LIMIT", "COMMONS_HTTP_ERROR",
+                "COMMONS_INVALID_RESPONSE", "COMMONS_REQUEST_FAILED",
+                "COMMONS_INVALID_CONTENT_TYPE", "COMMONS_RESPONSE_TOO_LARGE",
+            }
+            code = getattr(exc, "code", "")
+            if not isinstance(code, str) or code not in safe:
+                code = "PROVIDER_FAILED"
+            return None, ProviderStatus(adapter.name, code)
 
     async def search(self, query: SearchQuery) -> SearchOutcome:
         compatible = [
