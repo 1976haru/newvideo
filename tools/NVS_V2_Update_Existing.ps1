@@ -51,6 +51,29 @@ function VerifyCopy([string]$from,[string]$to) {
   if ($a[$i] -cne $b[$i]) { throw 'NVS_V2_BLOCKED_COPY_HASH' }
  }
 }
+# R1 live source adapters need requests and read-only Windows keyring.
+# Resolve them in the already-existing, validated V2-only venv BEFORE code swap.
+# Never install dependencies for the fixture Python, V1, user SQLite or media.
+function EnsureLiveDependencies([string]$python) {
+ $check="import requests, keyring;print('NVS_V2_LIVE_DEPENDENCIES_PASS')"
+ & $python -c $check
+ if ($LASTEXITCODE -eq 0) { return }
+ if ($FixtureMode) { throw 'NVS_V2_BLOCKED_FIXTURE_DEPENDENCIES' }
+ $expected=Canon (Join-Path $root '.venv\Scripts\python.exe')
+ if (!( (Canon $python).Equals($expected,[StringComparison]::OrdinalIgnoreCase) )) {
+  throw 'NVS_V2_BLOCKED_WRONG_PYTHON'
+ }
+ $drive=[IO.DriveInfo]::new([IO.Path]::GetPathRoot($expected))
+ if ($drive.AvailableFreeSpace -lt 536870912) {
+  throw 'NVS_V2_BLOCKED_INSUFFICIENT_VENV_SPACE'
+ }
+ Write-Output 'NVS_V2_INSTALL_LIVE_DEPS_EXISTING_VENV_ONLY'
+ & $python -m pip --isolated install --no-cache-dir --disable-pip-version-check --index-url https://pypi.org/simple 'requests>=2.32,<3' 'keyring>=25,<27'
+ if ($LASTEXITCODE -ne 0) { throw 'NVS_V2_BLOCKED_LIVE_DEPENDENCY_INSTALL' }
+ & $python -c $check
+ if ($LASTEXITCODE -ne 0) { throw 'NVS_V2_BLOCKED_LIVE_DEPENDENCY_IMPORT' }
+}
+
 function RunSmoke([string]$python,[string]$src,[switch]$RequireC024) {
  $prior=$env:PYTHONPATH
  try {
@@ -182,6 +205,12 @@ try {
  Copy-Item -LiteralPath $newSource -Destination $stage -Recurse -ErrorAction Stop
  AssertSource $stage
  VerifyCopy $newSource $stage
+ # Real live GUI imports requests immediately; correct only this V2 venv
+ # before moving the working source into a backup directory.
+ if (!$FixtureMode -and
+     (Test-Path -LiteralPath (Join-Path $stage 'nature_video_studio\live_sources.py') -PathType Leaf)) {
+  EnsureLiveDependencies $python
+ }
  RunSmoke $python $stage -RequireC024
  Move-Item -LiteralPath $active -Destination $backup -ErrorAction Stop
  $oldMoved=$true
