@@ -47,8 +47,9 @@ def build_window(*, live_providers: bool = True):
 
     if live_providers:
         from .live_sources import make_live_sources
+        from .live_gui import LiveSearchTabsWidget
         sources = make_live_sources()
-        tabs = SearchTabsWidget(sources.coordinator, pixabay_adapter=sources.pixabay)
+        tabs = LiveSearchTabsWidget(sources.coordinator, sources.pixabay)
     else:
         # Deterministic structural smoke tests never contact provider APIs.
         tabs = SearchTabsWidget()
