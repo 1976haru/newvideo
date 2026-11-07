@@ -11,6 +11,9 @@ explicit gate for any "actual 4K file" assertion.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+from pathlib import Path
+import subprocess
 import math
 from numbers import Real
 from urllib.parse import urlsplit
@@ -230,3 +233,44 @@ def validate_pixabay_ffprobe(
         width, height, duration, dimensions_match, bool(duration_match),
         verified_long, verified_4k,
     )
+
+
+def probe_pixabay_local_file(
+    candidate: MediaCandidate, rendition: Rendition, file_path: str | Path,
+    *, runner=None,
+) -> PixabayFileEvidence:
+    """Execute ffprobe safely on a user-approved, already-local MP4.
+
+    This does not download, search, or touch any user library/database.
+    A caller must first have selected the correct source file and reviewed
+    rights; untrusted remote links are never passed to ffprobe.
+    """
+    if candidate.provider != PIXABAY_PROVIDER or rendition not in candidate.renditions:
+        raise PixabayPayloadError("PIXABAY_PROBE_SOURCE_MISMATCH")
+    try:
+        target = Path(file_path)
+        if target.suffix.lower() != ".mp4" or not target.is_file():
+            raise PixabayPayloadError("PIXABAY_LOCAL_FILE_INVALID")
+    except (TypeError, ValueError, OSError):
+        raise PixabayPayloadError("PIXABAY_LOCAL_FILE_INVALID") from None
+
+    # Argument vector (never shell=True); no raw stderr, paths or API tokens in
+    # surfaced error messages. ffprobe is optional for this offline-only stage.
+    command = [
+        "ffprobe", "-v", "error", "-show_entries",
+        "stream=codec_type,width,height:format=duration", "-of", "json",
+        str(target),
+    ]
+    invoke = subprocess.run if runner is None else runner
+    try:
+        completed = invoke(
+            command, capture_output=True, text=True, timeout=20, check=False,
+        )
+        if completed.returncode != 0 or not isinstance(completed.stdout, str):
+            raise PixabayPayloadError("PIXABAY_FFPROBE_FAILED")
+        if len(completed.stdout) > 131072:
+            raise PixabayPayloadError("PIXABAY_FFPROBE_FAILED")
+        payload = json.loads(completed.stdout)
+    except (OSError, subprocess.TimeoutExpired, ValueError, TypeError):
+        raise PixabayPayloadError("PIXABAY_FFPROBE_FAILED") from None
+    return validate_pixabay_ffprobe(candidate, rendition, payload)
