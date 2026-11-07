@@ -7,7 +7,8 @@ size, url and thumbnail (https://pixabay.com/api/docs/).
 from __future__ import annotations
 
 import asyncio
-from copy import deepcopy
+import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +17,7 @@ from nature_video_studio.models import ResolutionMode, SearchMode, Rendition
 from nature_video_studio.pixabay_video import (
     PIXABAY_API_DOCS, PIXABAY_CACHE_TTL_SECONDS, PIXABAY_VIDEO_ENDPOINT,
     PixabayPayloadError, parse_pixabay_video_response, validate_pixabay_ffprobe,
+    probe_pixabay_local_file,
 )
 from nature_video_studio.search_coordinator import SearchCoordinator
 from nature_video_studio.source_adapter import SearchQuery
@@ -262,3 +264,47 @@ def test_pixabay_video_fixture_search_coordinator_respects_long_and_short_lanes(
     assert [c.source_id for c in long.accepted] == ["2"]
     assert [c.source_id for c in short.accepted] == ["1"]
     assert source.requests == [SearchMode.LONG_ORIGINAL, SearchMode.SHORT_COMPOSER]
+
+
+def test_pixabay_video_fixture_local_ffprobe_invokes_approved_local_mp4_only(tmp_path):
+    local = tmp_path / "lake sample.mp4"
+    local.write_bytes(b"synthetic only; no real video")
+    called = []
+    def fake_run(args, **kwargs):
+        called.append((args, kwargs))
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({
+                "streams": [{"codec_type": "video", "width": 3840, "height": 2160}],
+                "format": {"duration": "180.0"},
+            }),
+        )
+    candidate = parse(fixture_hit(180))
+    evidence = probe_pixabay_local_file(
+        candidate, candidate.renditions[0], local, runner=fake_run,
+    )
+    assert evidence.verified_4k_file and evidence.verified_long_original
+    args, kwargs = called[0]
+    assert args[0] == "ffprobe" and args[-1] == str(local)
+    assert kwargs["timeout"] == 20 and kwargs["capture_output"] is True
+    assert "shell" not in kwargs
+
+
+def test_pixabay_video_fixture_local_ffprobe_refuses_nonexistent_and_non_mp4(tmp_path):
+    candidate = parse(fixture_hit())
+    for file in (tmp_path / "missing.mp4", tmp_path / "untrusted.url"):
+        with pytest.raises(PixabayPayloadError, match="PIXABAY_LOCAL_FILE_INVALID"):
+            probe_pixabay_local_file(candidate, candidate.renditions[0], file)
+
+
+def test_pixabay_video_fixture_ffprobe_error_redacts_local_paths_and_stderr(tmp_path):
+    local = tmp_path / "private_name.mp4"
+    local.write_bytes(b"dummy")
+    candidate = parse(fixture_hit())
+    def broken_runner(args, **kwargs):
+        return SimpleNamespace(returncode=1, stdout="", stderr="password=SECRET")
+    with pytest.raises(PixabayPayloadError, match="PIXABAY_FFPROBE_FAILED") as exc:
+        probe_pixabay_local_file(candidate, candidate.renditions[0], local,
+                                 runner=broken_runner)
+    assert "private_name" not in str(exc.value)
+    assert "SECRET" not in str(exc.value)
