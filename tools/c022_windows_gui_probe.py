@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
         return 4
     # Native plugin must be requested explicitly; never inherit a headless QPA.
     os.environ["QT_QPA_PLATFORM"] = "windows"
-    from PySide6.QtWidgets import QApplication, QLabel, QPushButton
+    from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QTabWidget
     from nature_video_studio.trial_gui import build_window
     from nature_video_studio.version_identity import V2_IDENTITY
 
@@ -75,6 +75,21 @@ def main(argv: list[str] | None = None) -> int:
     ):
         print("C022_NATIVE_GUI_FAIL: labels or close button are missing")
         return 7
+
+    # C024 native Windows smoke: verify both newly visible search modes
+    # without confusing an unconnected adapter with a successful live search.
+    modes = window.findChild(QTabWidget, "searchModeTabs")
+    if (
+        modes is None or modes.count() != 2
+        or modes.tabText(0) != "3분 이상 원본"
+        or modes.tabText(1) != "짧은 영상 조합"
+        or window.findChild(QPushButton, "longSwitchMode") is None
+        or window.findChild(QPushButton, "shortSwitchMode") is None
+        or window.findChild(QLabel, "longResultCount") is None
+        or window.findChild(QLabel, "shortResultCount") is None
+    ):
+        print("C024_WINDOWS_SEARCH_TABS_FAIL: separate controls missing")
+        return 14
 
     handle = int(window.winId())
     if not handle or not ctypes.windll.user32.IsWindow(handle):
@@ -121,6 +136,8 @@ def main(argv: list[str] | None = None) -> int:
         "qt_client_dimensions": [window_pixmap.width(), window_pixmap.height()],
         "native_pixel_colors_sampled": _colors(native_pixmap),
         "visible_native_titlebar_text_ocr": "NOT_TESTED",
+        "c024_search_tabs": ["3분 이상 원본", "짧은 영상 조합"],
+        "c024_provider_search": "NOT_CONNECTED",
         "real_search_download_preview_composer": "NOT_IMPLEMENTED",
         "user_v1_data_validation": "NOT_TESTED",
     }
@@ -134,6 +151,8 @@ def main(argv: list[str] | None = None) -> int:
     if window.isVisible():
         print("C022_NATIVE_GUI_FAIL: close button did not close window")
         return 13
+    print("C024_WINDOWS_NATIVE_SEARCH_TABS_PASS")
+    print("C024_LIVE_SOURCE_SEARCH: SKIP_NOT_IMPLEMENTED")
     print("C022_NATIVE_WINDOWS_GUI_CAPTURE_PASS")
     print("C022_NATIVE_SCREENSHOT_EVIDENCE: " + str(native_png))
     print("C022_NATIVE_TITLEBAR_OCR: SKIP_NOT_RUN")
