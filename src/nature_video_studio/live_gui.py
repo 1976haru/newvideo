@@ -13,7 +13,9 @@ from urllib.parse import urlsplit
 
 from PySide6.QtCore import Qt, QThread, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QAbstractItemView, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout
+)
 
 from .models import SearchMode
 from .preview import PreviewResult
@@ -121,6 +123,9 @@ class LiveSearchTabsWidget(SearchTabsWidget):
         layout.insertWidget(2, self.key_status)
 
         for mode, pane in self.panes.items():
+            pane.results.setSelectionBehavior(
+                QAbstractItemView.SelectionBehavior.SelectRows
+            )
             if mode == SearchMode.LONG_ORIGINAL:
                 pane.provider_policy.setText(
                     "실제 장편 검색: Commons + Pixabay(키 필요). "
@@ -151,6 +156,8 @@ class LiveSearchTabsWidget(SearchTabsWidget):
             right = QVBoxLayout()
             pane.detail = QLabel("결과를 선택하여 제작자·라이선스·원본 페이지 확인")
             pane.detail.setWordWrap(True)
+            # Never interpret untrusted creator/title/notes as Qt rich HTML.
+            pane.detail.setTextFormat(Qt.TextFormat.PlainText)
             pane.detail.setObjectName(
                 "longResultDetail" if mode == SearchMode.LONG_ORIGINAL else "shortResultDetail"
             )
