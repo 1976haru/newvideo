@@ -2,7 +2,7 @@
 
 Windows desktop project for finding **legally reusable nature footage**, prioritizing original takes **>=180 seconds**, previewing results, and curating 15-song playlist video backgrounds.
 
-**Status:** C011 has a minimal runnable **V2 trial identity window** for titlebar verification only; the actual V2 search, download, preview, edit workflow and Windows EXE are NOT implemented. The legacy V1.0.2 remains a separate program and is not production ready.
+**Status:** The V2 trial GUI now contains **C024 separate long-original/short-clip tabs** and a **C025 offline 180-second duration self-check button**. Live provider search, real footage preview/playback, download, editing, and the release Windows EXE remain NOT implemented. The legacy V1.0.2 remains separate and must not be overwritten.
 
 ## Principles
 1. Never imply that a <3-minute stock video is an original 3-minute take.
@@ -32,3 +32,7 @@ Project owner: 1976haru. This branch is the V2 design baseline, not V2 feature c
 ## C011 - versioned V2 trial window
 
 A minimal PySide6 window can be started after installing the optional GUI dependencies: `python -m nature_video_studio`. The title starts with `[V2 시험판]` and includes the current `v2.0.0.dev0` version. It does not access V1.0.2 files, credentials, database, or media. For an isolated one-time Windows install into a new `D:\NVS_V2_Trial_App\C011_Titlebar_*` folder, follow [C011 titlebar UAT](docs/C011_VERSION_TITLEBAR.md). The Windows titlebar screenshot is not yet verified.
+
+## C024/C025 — existing V2 trial installation
+
+Do not create a new installation folder for each checklist. The user runs the existing V2 trial at D:\\NVS_V2_Trial_App\\C011_Titlebar_10206483 and upgrades its **code only** with the tested same-install updater. For [C025 180-second original gate](docs/C025_ORIGINAL_DURATION_GATE.md), use the tested commit 106d6c08f4247e54bbbff3d1d3d7a917b4b4703c, then click the offline C025 duration rule self-check in the Long Original tab. **Offline PASS is not verified footage from a real provider.** See [single-install procedure](docs/LOCAL_V2_SINGLE_INSTALL_UPDATE.md).
