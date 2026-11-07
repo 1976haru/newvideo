@@ -56,7 +56,9 @@ def main(argv: list[str] | None = None) -> int:
         print("C022_NATIVE_GUI_FAIL: not using Qt Windows platform plugin")
         return 5
 
-    window = build_window()
+    # C022 remains the explicit disconnected baseline; R1 live GUI has a
+    # separate Windows Qt integration test and an actual user-PC gate.
+    window = build_window(live_providers=False)
     window.move(80, 80)
     window.show()
     window.raise_()
