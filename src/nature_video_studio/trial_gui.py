@@ -1,0 +1,110 @@
+"""Existing V2 trial GUI with real, explicitly requested R1 provider search.
+
+Search uses official APIs only; downloads and video playback remain disabled.
+No network or user credential access occurs during window construction.
+"""
+from __future__ import annotations
+
+import sys
+
+from .version_identity import V2_IDENTITY, validate_trial_identity
+
+
+def build_window(*, live_providers: bool = True):
+    """Import optional Qt only when GUI was explicitly launched."""
+    from PySide6.QtCore import Qt, QTimer
+    from PySide6.QtWidgets import (
+        QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+    )
+
+    from .search_tabs import SearchTabsWidget
+
+    validate_trial_identity()
+    class _SafeCloseWindow(QMainWindow):
+        def closeEvent(self, event):
+            tabs = self.findChild(SearchTabsWidget, "trialSearchModes")
+            if tabs is not None:
+                running = tuple(getattr(tabs, "_threads", ())) + tuple(
+                    getattr(tabs, "_poster_workers", ())
+                )
+                if any(worker.isRunning() for worker in running):
+                    # Do not block the Qt event loop or destroy live QThreads;
+                    # let bounded network work end and retry close asynchronously.
+                    event.ignore()
+                    self.setEnabled(False)
+                    QTimer.singleShot(150, self.close)
+                    return
+            super().closeEvent(event)
+
+    window = _SafeCloseWindow()
+    window.setObjectName("NVS_V2_TRIAL_WINDOW")
+    window.setWindowTitle(V2_IDENTITY.window_title)
+    window.resize(900, 660)
+    widget = QWidget()
+    content = QVBoxLayout(widget)
+    content.setContentsMargins(30, 30, 30, 24)
+    content.setSpacing(14)
+
+    heading = QLabel(V2_IDENTITY.heading)
+    heading.setObjectName("versionHeading")
+    heading.setStyleSheet("font-size: 23px; font-weight: 700;")
+    content.addWidget(heading)
+
+    notice = QLabel(V2_IDENTITY.caution)
+    notice.setObjectName("trialNotice")
+    notice.setWordWrap(True)
+    notice.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+    notice.setStyleSheet("font-size: 14px; line-height: 1.5;")
+    content.addWidget(notice)
+
+    state = QLabel("버전 식별 점검: V2 시험판 GUI 실행 중 · V1.0.2와 별도")
+    state.setObjectName("versionStatus")
+    content.addWidget(state)
+
+    if live_providers:
+        from .live_sources import make_live_sources
+        from .live_gui import LiveSearchTabsWidget
+        sources = make_live_sources()
+        tabs = LiveSearchTabsWidget(sources.coordinator, sources.pixabay)
+    else:
+        # Deterministic structural smoke tests never contact provider APIs.
+        tabs = SearchTabsWidget()
+    tabs.setObjectName("trialSearchModes")
+    content.addWidget(tabs, 1)
+
+    close = QPushButton("창 닫기")
+    close.setObjectName("closeButton")
+    close.clicked.connect(window.close)
+    content.addWidget(close)
+    window.setCentralWidget(widget)
+    return window
+
+
+def main(argv: list[str] | None = None) -> int:
+    """--smoke tests only title and content; no OS GUI screenshot is claimed."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv not in ([], ["--smoke"]):
+        print("사용법: python -m nature_video_studio [--smoke]")
+        return 2
+    try:
+        from PySide6.QtWidgets import QApplication
+    except ImportError:
+        print("C011_GUI_DEPENDENCY_MISSING: PySide6 (별도 설치 필요)")
+        return 2
+
+    app = QApplication.instance() or QApplication(["Nature Video Studio V2 trial"])
+    window = build_window(live_providers=(argv != ["--smoke"]))
+    if argv == ["--smoke"]:
+        if "[V2 시험판]" not in window.windowTitle():
+            print("C011_GUI_SMOKE_FAIL")
+            return 1
+        print("C011_GUI_SMOKE_PASS")
+        print("TITLE_UNICODE_ESCAPE: " + window.windowTitle().encode("unicode_escape").decode("ascii"))
+        print("WINDOW_OBJECT_NAME: " + window.objectName())
+        print("V1_DATA_READ_OR_WRITTEN: False")
+        print("REAL_WINDOWS_TITLEBAR_CAPTURE: SKIP_NOT_RUN")
+        window.close()
+        return 0
+
+    window.show()
+    return app.exec()

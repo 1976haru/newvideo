@@ -1,0 +1,151 @@
+name: V2 core CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - name: C012 mandatory DB and media preservation gate
+        run: python -m pytest -q -k migration_and_preservation
+      - name: C017 offline V1 failure regression fixtures
+        run: python -m pytest -q tests/test_legacy_regression.py
+      - name: C020 service module dependency boundary gate
+        run: python -m pytest -q tests/test_c020_module_boundaries.py
+      - name: C021 security SSRF and token redaction gate
+        run: python -m pytest -q -k "security or ssrf or redact"
+      - name: C022 CI evidence contract (headless only; not GUI PASS)
+        run: python -m pytest -q tests/test_c022_ci_contract.py
+      - name: C024 independent search modes headless contract gate
+        run: python -m pytest -q -k search_mode_isolation
+      - name: C025 exact 180-second original and assembled-clip exclusion gate
+        run: python -m pytest -q tests/test_long_duration.py tests/test_c025_duration_self_check.py
+      - name: C026 long original duration preset and independent max gate
+        run: python -m pytest -q -k duration_preset
+      - name: C027 true zero vs unavailable and no silent fallback gate
+        run: python -m pytest -q -k no_silent_fallback
+      - name: C028 Pexels 120s clip-only policy and long-source exclusion gate
+        run: python -m pytest -q -k pexels_lane
+      - name: C029 Pixabay video duration/large rendition/ffprobe fixture gate
+        run: python -m pytest -q -k pixabay_video_fixture
+      - name: C030 Commons videoinfo/extmetadata long-original adapter fixture gate
+        run: python -m pytest -q -k commons_adapter
+      - name: R1 live provider search transport and cache fixture gate
+        run: python -m pytest -q tests/test_r1_live_search_gui.py
+      - run: python -m pytest -q
+
+  c005-video-backup:
+    name: C005 PowerShell Windows fixtures
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit, copy, checksum, conflict, and nonmutation
+        shell: powershell
+        run: .\tests\test_c005_video_backup.ps1
+
+  c011-qt-windows:
+    name: C011 Qt OFFSCREEN widget smoke (not native GUI)
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+      NVS_RUN_QT_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev,gui]"
+      - name: C011 identity and C024 real Qt offscreen tab interaction tests
+        run: python -m pytest -q tests/test_c011_version_identity.py tests/test_c011_gui.py tests/test_c024_gui_search_modes.py tests/test_c025_gui_self_check.py tests/test_c026_gui_duration_presets.py tests/test_c027_gui_no_silent_fallback.py tests/test_c028_gui_pexels_lane.py tests/test_r1_live_search_gui.py
+      - run: python -m nature_video_studio --smoke
+      - name: Existing V2 same-install update and rollback (synthetic Windows fixture)
+        shell: powershell
+        run: .\tests\test_v2_existing_install_update.ps1
+      - name: C011 PowerShell 5.1 script parse (no installer execution)
+        shell: powershell
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$pwd\\tools\\C011_Run_V2_Trial.ps1", [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -gt 0) { throw 'C011 PowerShell parse failed' }
+          Write-Host 'C011_INSTALLER_PARSE_PASS'
+
+
+  c022-native-windows-gui-package:
+    name: C022 Windows NATIVE GUI screenshot and trial EXE QA
+    runs-on: windows-latest
+    needs: [tests, c011-qt-windows]
+    timeout-minutes: 35
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned trial GUI and packaging tools
+        run: python -m pip install "PySide6==6.12.0" "PyInstaller==6.16.0" -e ".[dev,gui]"
+
+      - name: R1 native Windows LIVE provider GUI window and screenshot (no API request)
+        shell: pwsh
+        run: |
+          Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
+          python -m tools.r1_windows_native_live_gui_probe "$env:RUNNER_TEMP\r1_source_native"
+          if ($LASTEXITCODE -ne 0) { throw 'R1_NATIVE_LIVE_GUI_WIRING_FAIL' }
+          if (-not (Test-Path "$env:RUNNER_TEMP\r1_source_native\r1_native_live_source_widgets.png")) { throw 'R1_NATIVE_GUI_SCREENSHOT_MISSING' }
+
+      - name: C022 native Windows Qt GUI visible HWND and actual screenshot
+        shell: pwsh
+        run: |
+          Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
+          python -m tools.c022_windows_gui_probe "$env:RUNNER_TEMP\c022_source_native"
+          if ($LASTEXITCODE -ne 0) { throw 'C022_NATIVE_WINDOWS_GUI_CAPTURE_FAIL' }
+          if (-not (Test-Path "$env:RUNNER_TEMP\c022_source_native\c022_native_window_capture.png")) { throw 'C022_NATIVE_SCREENSHOT_MISSING' }
+
+      - name: Build isolated C022 trial-only Python-independent onedir EXE
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onedir --name NVS_V2_C022_TRIAL --paths src --paths . tools/c022_package_entry.py
+          if ($LASTEXITCODE -ne 0) { throw 'C022_PYINSTALLER_BUILD_FAIL' }
+          $exe = "dist\NVS_V2_C022_TRIAL\NVS_V2_C022_TRIAL.exe"
+          if (-not (Test-Path $exe -PathType Leaf)) { throw 'C022_TRIAL_EXE_MISSING' }
+          Write-Host 'C022_TRIAL_ONEDIR_BUILD_PASS'
+
+      - name: Launch trial EXE without Python PATH in a Hangul and spaces path
+        shell: pwsh
+        run: |
+          Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
+          python -m tools.c022_package_qa "dist\NVS_V2_C022_TRIAL\NVS_V2_C022_TRIAL.exe" "$env:RUNNER_TEMP\c022_package_qa"
+          if ($LASTEXITCODE -ne 0) { throw 'C022_TRIAL_ONEDIR_QA_FAIL' }
+          if (-not (Test-Path "$env:RUNNER_TEMP\c022_package_qa\packaged_native_gui\c022_package_evidence.json")) { throw 'C022_PACKAGE_EVIDENCE_MISSING' }
+
+      - name: Upload Windows screenshot and trial EXE test proof (not a release)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c022-windows-native-gui-and-trial-package-evidence
+          path: |
+            ${{ runner.temp }}/r1_source_native/*.png
+            ${{ runner.temp }}/r1_source_native/*.json
+            ${{ runner.temp }}/c022_source_native/*.png
+            ${{ runner.temp }}/c022_source_native/*.json
+            ${{ runner.temp }}/c022_package_qa/packaged_native_gui/*.png
+            ${{ runner.temp }}/c022_package_qa/packaged_native_gui/*.json
+          if-no-files-found: warn
+          retention-days: 14

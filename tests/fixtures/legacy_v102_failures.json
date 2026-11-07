@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "checklist": "C017",
+  "fixture_type": "synthetic_offline_reproduction",
+  "warning": "All HTTP responses, codec stderr, video container bytes, meeting titles, and provider URLs below are synthetic examples. Historical V1.0.2 02.JPG has an unspecified preview failure and did not prove a 403/codec root cause. No user keys, live video, or licensed media included.",
+  "historical_evidence": {
+    "screenshot": "02.JPG (referenced in docs/RESEARCH_DECISIONS.md; not copied into repository)",
+    "source_paths_in_C002_archive": [
+      "nvs/gui.py",
+      "nvs/providers.py"
+    ],
+    "observed": [
+      "Image preview failure in V1.0.2 GUI; exact cause unverified",
+      "QLabel/QPixmap poster request; no actual video player",
+      "Archive lake search yielded council/meeting title false positives"
+    ],
+    "confidence": "reported_source_audit_not_replayed_now"
+  },
+  "poster_cases": [
+    {
+      "id": "http_403_forbidden",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/403.jpg",
+      "failure": "http",
+      "http_status": 403,
+      "mime": "image/jpeg",
+      "payload_hex": "",
+      "expected_code": "PREVIEW_HTTP_403"
+    },
+    {
+      "id": "http_404_missing",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/404.jpg",
+      "failure": "http",
+      "http_status": 404,
+      "mime": "image/jpeg",
+      "payload_hex": "",
+      "expected_code": "PREVIEW_HTTP_404"
+    },
+    {
+      "id": "http_429_rate_limit",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/429.jpg",
+      "failure": "http",
+      "http_status": 429,
+      "mime": "image/jpeg",
+      "payload_hex": "",
+      "expected_code": "PREVIEW_HTTP_429"
+    },
+    {
+      "id": "http_502_upstream",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/502.jpg",
+      "failure": "http",
+      "http_status": 502,
+      "mime": "image/jpeg",
+      "payload_hex": "",
+      "expected_code": "PREVIEW_HTTP_502"
+    },
+    {
+      "id": "request_timeout",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/timeout.jpg",
+      "failure": "timeout",
+      "expected_code": "PREVIEW_TIMEOUT"
+    },
+    {
+      "id": "tls_certificate_failure",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/tls.jpg",
+      "failure": "tls",
+      "expected_code": "PREVIEW_TLS"
+    },
+    {
+      "id": "connection_reset",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/connection.jpg",
+      "failure": "connection",
+      "expected_code": "PREVIEW_NETWORK"
+    },
+    {
+      "id": "unexpected_html",
+      "provider": "Pixabay",
+      "url": "https://cdn.pixabay.com/c017/html.jpg",
+      "failure": "http",
+      "http_status": 200,
+      "mime": "text/html",
+      "payload_hex": "3c68746d6c3e",
+      "expected_code": "PREVIEW_NOT_IMAGE"
+    },
+    {
+      "id": "corrupt_jpeg_magic",
+      "provider": "Pixabay",
+      "url": "https://cdn.pixabay.com/c017/corrupt.jpg",
+      "failure": "http",
+      "http_status": 200,
+      "mime": "image/jpeg",
+      "payload_hex": "3c68746d6c3e",
+      "expected_code": "PREVIEW_INVALID_IMAGE"
+    },
+    {
+      "id": "corrupt_png_magic",
+      "provider": "Pixabay",
+      "url": "https://cdn.pixabay.com/c017/corrupt.png",
+      "failure": "http",
+      "http_status": 200,
+      "mime": "image/png",
+      "payload_hex": "4e4f54504e47",
+      "expected_code": "PREVIEW_INVALID_IMAGE"
+    },
+    {
+      "id": "empty_jpeg",
+      "provider": "Pixabay",
+      "url": "https://cdn.pixabay.com/c017/empty.jpg",
+      "failure": "http",
+      "http_status": 200,
+      "mime": "image/jpeg",
+      "payload_hex": "",
+      "expected_code": "PREVIEW_EMPTY"
+    },
+    {
+      "id": "unsafe_redirect",
+      "provider": "Pexels",
+      "url": "https://images.pexels.com/c017/redirect.jpg",
+      "failure": "http",
+      "http_status": 302,
+      "mime": "image/jpeg",
+      "headers": {
+        "Location": "https://other.example/private"
+      },
+      "payload_hex": "",
+      "expected_code": "PREVIEW_BAD_REDIRECT"
+    }
+  ],
+  "codec_cases": [
+    {
+      "id": "decoder_absent",
+      "codec": "hevc",
+      "ffmpeg_stderr": "Decoder (codec hevc) not found for input stream #0:0",
+      "expected_code": "PLAYBACK_CODEC_UNSUPPORTED",
+      "detail": "Simulated lack of decoder, not HEVC universally unsupported"
+    },
+    {
+      "id": "unknown_fourcc",
+      "codec": "unknown_999",
+      "ffmpeg_stderr": "Unsupported codec with id 999 in input stream 0",
+      "expected_code": "PLAYBACK_CODEC_UNSUPPORTED"
+    },
+    {
+      "id": "container_missing_moov",
+      "codec": "h264",
+      "ffmpeg_stderr": "moov atom not found",
+      "expected_code": "PLAYBACK_MEDIA_CORRUPT"
+    },
+    {
+      "id": "invalid_mp4",
+      "codec": "unknown",
+      "ffmpeg_stderr": "Invalid data found when processing input",
+      "expected_code": "PLAYBACK_MEDIA_CORRUPT"
+    },
+    {
+      "id": "file_missing",
+      "codec": "h264",
+      "ffmpeg_stderr": "No such file or directory",
+      "expected_code": "PLAYBACK_FILE_MISSING"
+    },
+    {
+      "id": "undetermined_multimedia_error",
+      "codec": "unknown",
+      "ffmpeg_stderr": "Multimedia backend error 0xdeadbeef",
+      "expected_code": "PLAYBACK_UNKNOWN"
+    }
+  ],
+  "invalid_video_container": {
+    "id": "malformed_mp4_container_bytes",
+    "format": "mp4",
+    "payload_hex": "000000186674797069736f6d0000020069736f6d",
+    "significance": "Truncated ISO BMFF header with no valid sample data; only a synthetic invalid-file fixture. This is not a test of Qt playback or FFmpeg decoding."
+  },
+  "nature_cases": [
+    {
+      "id": "archive_lake_council_meeting",
+      "provider": "Internet Archive",
+      "source_id": "synthetic-council-001",
+      "title": "Lake County Council regular meeting - November",
+      "description": "County board session, councillors speaking at a dais, agenda votes",
+      "duration_seconds": 2460,
+      "original_duration_verified": true,
+      "nature_relevance_verified": false,
+      "width": 1920,
+      "height": 1080,
+      "expected_nature": false,
+      "expected_search_lane": "reject"
+    },
+    {
+      "id": "archive_lake_school_board",
+      "provider": "Internet Archive",
+      "source_id": "synthetic-board-002",
+      "title": "Lake School District Board Meeting",
+      "description": "Meeting in school auditorium; administrative budget hearing",
+      "duration_seconds": 1800,
+      "original_duration_verified": true,
+      "nature_relevance_verified": false,
+      "width": 3840,
+      "height": 2160,
+      "expected_nature": false,
+      "expected_search_lane": "reject"
+    },
+    {
+      "id": "commons_lake_nature",
+      "provider": "Wikimedia Commons",
+      "source_id": "synthetic-nature-003",
+      "title": "Quiet mountain lake with moving ripples",
+      "description": "Continuous shot of mountain lake scenery",
+      "duration_seconds": 365,
+      "original_duration_verified": true,
+      "nature_relevance_verified": true,
+      "width": 3840,
+      "height": 2160,
+      "expected_nature": true,
+      "expected_search_lane": "accept"
+    },
+    {
+      "id": "archive_lake_title_ambiguous",
+      "provider": "Internet Archive",
+      "source_id": "synthetic-ambiguous-004",
+      "title": "Lake Event Highlights",
+      "description": "No verifiable visual nature evidence",
+      "duration_seconds": 400,
+      "original_duration_verified": true,
+      "nature_relevance_verified": false,
+      "width": 3840,
+      "height": 2160,
+      "expected_nature": false,
+      "expected_search_lane": "review"
+    }
+  ]
+}
