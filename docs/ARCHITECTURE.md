@@ -25,3 +25,33 @@ Core candidate: source, source_id, source_url, creator, title, duration_seconds,
 
 ### QA failure classes
 QA_PREVIEW_POSTER_FETCH; QA_PREVIEW_PLAYBACK; QA_DURATION_FILTER; QA_PROVIDER_RATE_LIMIT; QA_LICENSE_EVIDENCE; QA_DOWNLOAD_INTEGRITY; QA_COMPOSER_OUTPUT; QA_WINDOWS_PACKAGING; QA_API_KEY_SECURITY. Track separately to avoid false PASS.
+
+## C020 executable service boundaries — 2026-11-07
+
+The original diagram above is the **target application**, not the claim that
+those backends currently work. C020 establishes actual headless modules and
+contracts, documented in [C020_MODULE_BOUNDARIES.md](C020_MODULE_BOUNDARIES.md).
+
+- `source_adapter.py`: `SourceAdapter` (async Protocol), `SearchQuery`,
+  `SearchPage`. Concrete Pexels/Pixabay/Commons/Archive adapters: **NOT YET**.
+- `search_coordinator.py`: `SearchCoordinator` asynchronously isolates
+  provider failures and applies the existing strict `filter_candidates`.
+  Mode-incompatible providers are never invoked; no short-clip fallback.
+- `preview_service.py`: `PreviewService` runs the existing poster fetcher
+  via `asyncio.to_thread`. Poster display and Qt multimedia playback are
+  different services. Real GUI integration: **NOT YET**.
+- `rights_review.py`: `RightsReview` wraps the cautious source license
+  triage. Approval/provenance persistence: **NOT YET**.
+- `download_queue.py`: `DownloadQueue` Protocol and verified-selection
+  `DownloadIntent`; `UnavailableDownloadQueue` is fail closed. **No
+  network download functionality.**
+- `catalog.py`: `Catalog` Protocol, `UnavailableCatalog` fail closed;
+  the existing C008 migration is **not** a production library service.
+- `composer.py`: `Composer` Protocol, `CompositionPlan` for
+  3/10/20/30/60 min output, `UnavailableComposer` fail closed.
+  **No FFmpeg output functionality.**
+
+See `tests/test_c020_module_boundaries.py`: AST import/dependency restrictions,
+strict long-versus-short boundaries, provider error isolation, poster worker
+thread test, rights/download guards, and explicit unavailable backend tests.
+Real Qt GUI/Windows media validation remains a separate R2 acceptance gate.
