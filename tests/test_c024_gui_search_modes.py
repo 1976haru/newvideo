@@ -20,7 +20,7 @@ def test_search_mode_isolation_gui_independent_tabs_sort_counts_and_switch():
     from nature_video_studio.models import SearchMode
     from nature_video_studio.search_mode_state import LaneStatus
 
-    window = build_window()
+    window = build_window(live_providers=False)
     window.show()
     app.processEvents()
     tabs = window.findChild(qt.QTabWidget, "searchModeTabs")
