@@ -9,7 +9,7 @@ from __future__ import annotations
 import ipaddress
 import re
 import socket
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 
 # Explicit media hosts; no arbitrary www.example subdomains or external pages.
@@ -88,9 +88,20 @@ def provider_url_allowed(url: str, provider: str, purpose: str = "poster") -> bo
             pass
         else:
             return False
-        # Forbid decoded traversal intended to confuse later HTTP/path handlers.
-        if re.search(r"(?:^|/)\.{2}(?:/|$)", parsed.path):
-            return False
+        # Forbid plaintext, encoded or double-encoded path traversal and
+        # control bytes. These must not be normalized by requests later.
+        part = parsed.path
+        for _ in range(3):
+            if (
+                re.search(r"(?:^|/)\.{2}(?:/|$)", part)
+                or "\\" in part
+                or any(ord(c) <= 31 or ord(c) == 127 for c in part)
+            ):
+                return False
+            next_part = unquote(part)
+            if next_part == part:
+                break
+            part = next_part
     except ValueError:
         return False
     return True
