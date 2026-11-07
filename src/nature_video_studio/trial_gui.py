@@ -1,7 +1,7 @@
-"""C011 trial shell plus C024 independent search-mode tabs.
+"""Existing V2 trial GUI with real, explicitly requested R1 provider search.
 
-No provider adapters or user data sources are enabled yet. This remains a
-V2 development GUI, not a real footage search/download/playback product.
+Search uses official APIs only; downloads and video playback remain disabled.
+No network or user credential access occurs during window construction.
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import sys
 from .version_identity import V2_IDENTITY, validate_trial_identity
 
 
-def build_window():
+def build_window(*, live_providers: bool = True):
     """Import optional Qt only when GUI was explicitly launched."""
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import (
@@ -45,9 +45,13 @@ def build_window():
     state.setObjectName("versionStatus")
     content.addWidget(state)
 
-    # C024: both independent lanes are visible; without genuine authorized
-    # source adapters search clicks correctly return UNAVAILABLE, not fake 0.
-    tabs = SearchTabsWidget()
+    if live_providers:
+        from .live_sources import make_live_sources
+        sources = make_live_sources()
+        tabs = SearchTabsWidget(sources.coordinator, pixabay_adapter=sources.pixabay)
+    else:
+        # Deterministic structural smoke tests never contact provider APIs.
+        tabs = SearchTabsWidget()
     tabs.setObjectName("trialSearchModes")
     content.addWidget(tabs, 1)
 
@@ -72,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     app = QApplication.instance() or QApplication(["Nature Video Studio V2 trial"])
-    window = build_window()
+    window = build_window(live_providers=(argv != ["--smoke"]))
     if argv == ["--smoke"]:
         if "[V2 시험판]" not in window.windowTitle():
             print("C011_GUI_SMOKE_FAIL")
