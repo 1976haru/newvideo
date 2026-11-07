@@ -43,3 +43,27 @@ C024 3/3 PASS는 (1) 상태/데이터/모드 격리 자동 테스트 PASS (2) Wi
 실제 사용자 PC의 Windows 10/11 설치형 EXE, 실제 Wikimedia/Archive/Pexels/Pixabay 검색, 180초 원본 확인·4K 실파일 검증·적합도, 썸네일·비디오 재생, 권리 검토, 다운로드·편집은 구현/검증되었다고 표시하지 않는다. UI에서 검색 버튼을 누르면 실 검색 결과 0건으로 속이지 않고 제공처 연결 전이라고 표시한다.
 
 기존 V1.0.2, 사용자 API 키, DB, 영상, D: 드라이브, 백업은 접근하지 않으며 main 및 Draft PR #1의 미병합 상태를 유지한다.
+
+## 2026-11-07 실제 GitHub Actions 수용 증거
+
+**C024 독립 UI/모의 검색 기능 범위: 최종 PASS 3/3점.** 코드 검증 SHA **8482a070a67afb63d8ad28fc92520dd701a4ec3b**.
+
+- 실제 성공 워크플로: https://github.com/1976haru/newvideo/actions/runs/42328565712
+- Windows/Ubuntu × Python 3.11/3.12 전체 4개 테스트 job **SUCCESS**, C005 보존 PowerShell **SUCCESS**, Qt Windows 오프스크린 8 PASS, C022 Windows 네이티브 화면/시험 EXE **SUCCESS**. 총 7개 job 전부 성공.
+- Windows Python 3.11의 정확한 CI 명령 및 집계:
+  - python -m pytest -q -k migration_and_preservation → 26 passed
+  - python -m pytest -q tests/test_legacy_regression.py → 26 passed
+  - python -m pytest -q tests/test_c020_module_boundaries.py → 21 passed
+  - python -m pytest -q -k "security or ssrf or redact" → 81 passed
+  - python -m pytest -q tests/test_c022_ci_contract.py → 7 passed
+  - python -m pytest -q -k search_mode_isolation → **25 passed, 2 skipped** (Qt 2개는 기본 headless 작업에서 의도적으로 SKIP)
+  - python -m pytest -q → **309 passed, 3 skipped, 0 failed**
+- Windows Qt 작업 실제 명령:
+  - python -m pytest -q tests/test_c011_version_identity.py tests/test_c011_gui.py tests/test_c024_gui_search_modes.py → **8 passed**
+  - 별도의 네이티브 Windows 작업 → **C024_WINDOWS_NATIVE_SEARCH_TABS_PASS**, **C022_NATIVE_WINDOWS_GUI_CAPTURE_PASS**, **C022_WINDOWS_ONEDIR_TRIAL_PACKAGE_PASS**, **C022_WINDOWS_PACKAGED_NATIVE_GUI_PASS**
+  - 테스트 로그는 **C024_LIVE_SOURCE_SEARCH: SKIP_NOT_IMPLEMENTED**도 명시.
+- 스크린샷 및 JSON 증빙(네이티브 QWidget/Windows HWND + 패키징된 trial EXE): https://github.com/1976haru/newvideo/actions/runs/42328565712/artifacts/13555873339
+  - GitHub artifact ID **13555873339**, 7개 파일, 73,447 압축 바이트, 실제 업로드 확인.
+  - 화면 캡처/GUI 시험은 **시범 탭의 표시** 증거이며 실제 출처 검색의 네트워크 성공이나 R2 비디오 재생 증거가 아니다.
+
+**완료 체크리스트:** C024가 3/3으로 완료되어 확인된 완료 항목 **18/162개 = 약 11.1% (항목 수 기준)**. 가중치 기반 제품 완성률은 아직 산출하지 않는다. `main`과 기존 V1.0.2 데이터/API 키는 변경하지 않았으며 Draft PR #1 미병합 유지.
