@@ -23,6 +23,7 @@ from .search_mode_state import (
 from .source_adapter import SearchQuery
 from .search_coordinator import ProviderStatus, SearchOutcome
 from .duration_self_check import run_duration_self_check
+from .provider_policy import long_lane_policy_text, short_lane_policy_text
 
 
 class _SearchThread(QThread):
@@ -69,6 +70,15 @@ class _LanePane(QWidget):
         hint.setObjectName(prefix + "ModeHint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
+
+        # C028: a visible provider capability policy, not a live source list.
+        self.provider_policy = QLabel(
+            long_lane_policy_text() if mode == SearchMode.LONG_ORIGINAL
+            else short_lane_policy_text()
+        )
+        self.provider_policy.setObjectName(prefix + "ProviderPolicy")
+        self.provider_policy.setWordWrap(True)
+        layout.addWidget(self.provider_policy)
 
         query_row = QHBoxLayout()
         self.query = QLineEdit()

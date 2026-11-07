@@ -6,6 +6,7 @@ from numbers import Real
 import math
 
 from .models import MediaCandidate, ResolutionMode, SearchMode
+from .provider_policy import is_pexels
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,10 @@ def _finite_duration(value: object) -> bool:
 
 def duration_reason(candidate: MediaCandidate, criteria: SearchCriteria) -> str | None:
     if criteria.mode == SearchMode.LONG_ORIGINAL:
+        # Pexels uploads are 5–120s by current official policy, so this
+        # provider is not a ≥180s original source even with corrupt metadata.
+        if is_pexels(candidate.provider):
+            return "Pexels는 최대 120초 클립 전용 제공처"
         if candidate.is_assembled:
             return "조합 영상은 연속 원본이 아님"
         if not candidate.original_duration_verified or not _finite_duration(candidate.duration_seconds):

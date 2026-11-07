@@ -119,6 +119,21 @@ def main(argv: list[str] | None = None) -> int:
         print("C027_WINDOWS_ZERO_ALTERNATIVE_INITIAL_STATE_FAIL")
         return 16
 
+    # C028: policy must be visible independently in each real Windows lane.
+    long_policy = window.findChild(QLabel, "longProviderPolicy")
+    short_policy = window.findChild(QLabel, "shortProviderPolicy")
+    if (
+        long_policy is None or short_policy is None
+        or "Pexels" not in long_policy.text()
+        or "120초" not in long_policy.text()
+        or "장편 원본 공급처에서 제외" not in long_policy.text()
+        or "Pexels" not in short_policy.text()
+        or "5~120초" not in short_policy.text()
+        or "제공처 미연결" not in short_policy.text()
+    ):
+        print("C028_WINDOWS_PEXELS_CLIP_ONLY_POLICY_LABEL_FAIL")
+        return 20
+
     handle = int(window.winId())
     if not handle or not ctypes.windll.user32.IsWindow(handle):
         print("C022_NATIVE_GUI_FAIL: Windows HWND missing")
@@ -204,6 +219,9 @@ def main(argv: list[str] | None = None) -> int:
         "c027_offline_zero_demo": "PASS_EXPLICIT_TEST_ONLY",
         "c027_zero_alternative_requires_click": "PASS",
         "c027_no_provider_must_not_show_zero": "PASS",
+        "c028_pexels_long_policy": "EXCLUDED_UPLOAD_MAX_120S",
+        "c028_pexels_clip_policy": "5_TO_120_SECONDS_ONLY",
+        "c028_live_pexels_api": "NOT_CONNECTED",
         "real_search_download_preview_composer": "NOT_IMPLEMENTED",
         "user_v1_data_validation": "NOT_TESTED",
     }
@@ -217,6 +235,8 @@ def main(argv: list[str] | None = None) -> int:
     if window.isVisible():
         print("C022_NATIVE_GUI_FAIL: close button did not close window")
         return 13
+    print("C028_WINDOWS_NATIVE_PEXELS_CLIP_ONLY_PASS")
+    print("C028_LIVE_PEXELS_API_SEARCH: SKIP_NOT_CONNECTED")
     print("C027_WINDOWS_NATIVE_NO_SILENT_FALLBACK_PASS")
     print("C027_LIVE_ZERO_RESULT_SEARCH: SKIP_PROVIDER_NOT_CONNECTED")
     print("C026_WINDOWS_NATIVE_DURATION_PRESETS_PASS")

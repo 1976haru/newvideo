@@ -8,6 +8,7 @@ from typing import Iterable
 from .filtering import filter_candidates
 from .models import MediaCandidate
 from .source_adapter import SearchPage, SearchQuery, SourceAdapter
+from .provider_policy import supports_mode
 
 
 @dataclass(frozen=True)
@@ -55,11 +56,15 @@ class SearchCoordinator:
             return None, ProviderStatus(adapter.name, "PROVIDER_FAILED")
 
     async def search(self, query: SearchQuery) -> SearchOutcome:
-        compatible = [adapter for adapter in self._adapters
-                      if query.criteria.mode in adapter.supported_modes]
-        incompatible = [ProviderStatus(adapter.name, "MODE_UNSUPPORTED")
-                        for adapter in self._adapters
-                        if query.criteria.mode not in adapter.supported_modes]
+        compatible = [
+            adapter for adapter in self._adapters
+            if supports_mode(adapter.name, query.criteria.mode, adapter.supported_modes)
+        ]
+        incompatible = [
+            ProviderStatus(adapter.name, "MODE_UNSUPPORTED")
+            for adapter in self._adapters
+            if not supports_mode(adapter.name, query.criteria.mode, adapter.supported_modes)
+        ]
         replies = await asyncio.gather(*(self._call(a, query) for a in compatible))
         all_candidates = [candidate for page, _ in replies if page is not None
                           for candidate in page.candidates]
