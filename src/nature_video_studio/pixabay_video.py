@@ -38,7 +38,10 @@ class PixabayPayloadError(ValueError):
 def _positive_number(value: object) -> float | None:
     if isinstance(value, bool) or not isinstance(value, Real):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except (ValueError, TypeError, OverflowError):
+        return None
     if not math.isfinite(number) or number <= 0:
         return None
     return number
@@ -78,7 +81,8 @@ def _rendition(raw: object) -> tuple[Rendition, str] | None:
     if (
         not isinstance(url, str) or not provider_url_allowed(
             url, PIXABAY_PROVIDER, "download"
-        ) or width is None or height is None or size is None
+        ) or not urlsplit(url).path.lower().endswith(".mp4")
+        or width is None or height is None or size is None
     ):
         return None
     poster = raw.get("thumbnail")
