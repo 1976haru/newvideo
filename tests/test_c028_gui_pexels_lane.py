@@ -17,7 +17,7 @@ def test_pexels_lane_gui_labels_and_manual_tabs_without_fabricated_search():
     from nature_video_studio.models import SearchMode
     from nature_video_studio.search_mode_state import LaneStatus
 
-    window = build_window()
+    window = build_window(live_providers=False)
     window.show()
     app.processEvents()
     tabs = window.findChild(Qt.QTabWidget, "searchModeTabs")
