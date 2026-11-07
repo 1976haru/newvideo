@@ -1,7 +1,7 @@
-"""C011 minimal PySide6 trial shell. Does NOT access V1 files or OS keys.
+"""C011 trial shell plus C024 independent search-mode tabs.
 
-This only proves V2 version identity and human-readable trial warning. Full
-search / preview / rights / download GUI is not implemented by this screen.
+No provider adapters or user data sources are enabled yet. This remains a
+V2 development GUI, not a real footage search/download/playback product.
 """
 from __future__ import annotations
 
@@ -17,11 +17,13 @@ def build_window():
         QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
     )
 
+    from .search_tabs import SearchTabsWidget
+
     validate_trial_identity()
     window = QMainWindow()
     window.setObjectName("NVS_V2_TRIAL_WINDOW")
     window.setWindowTitle(V2_IDENTITY.window_title)
-    window.resize(780, 330)
+    window.resize(900, 660)
     widget = QWidget()
     content = QVBoxLayout(widget)
     content.setContentsMargins(30, 30, 30, 24)
@@ -42,7 +44,13 @@ def build_window():
     state = QLabel("버전 식별 점검: V2 시험판 GUI 실행 중 · V1.0.2와 별도")
     state.setObjectName("versionStatus")
     content.addWidget(state)
-    content.addStretch(1)
+
+    # C024: both independent lanes are visible; without genuine authorized
+    # source adapters search clicks correctly return UNAVAILABLE, not fake 0.
+    tabs = SearchTabsWidget()
+    tabs.setObjectName("trialSearchModes")
+    content.addWidget(tabs, 1)
+
     close = QPushButton("창 닫기")
     close.setObjectName("closeButton")
     close.clicked.connect(window.close)
