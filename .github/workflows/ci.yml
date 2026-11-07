@@ -60,6 +60,9 @@ jobs:
       - name: C011 identity and C024 real Qt offscreen tab interaction tests
         run: python -m pytest -q tests/test_c011_version_identity.py tests/test_c011_gui.py tests/test_c024_gui_search_modes.py
       - run: python -m nature_video_studio --smoke
+      - name: Existing V2 same-install update and rollback (synthetic Windows fixture)
+        shell: powershell
+        run: .\tests\test_v2_existing_install_update.ps1
       - name: C011 PowerShell 5.1 script parse (no installer execution)
         shell: powershell
         run: |
