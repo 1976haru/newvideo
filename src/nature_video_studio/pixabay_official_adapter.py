@@ -45,7 +45,7 @@ def _read_existing_key() -> str | None:
     try:
         import keyring
     except ImportError:
-        return None
+        raise PixabayServiceError("KEYRING_UNAVAILABLE") from None
     try:
         for provider in LEGACY_PROVIDER_USERNAMES:
             value = keyring.get_password(KEYRING_SERVICE, provider)
