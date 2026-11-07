@@ -195,8 +195,11 @@ class LiveSearchTabsWidget(SearchTabsWidget):
     def _candidate(self, mode):
         pane = self.panes[mode]
         row = pane.results.currentRow()
+        selection = pane.results.selectedIndexes()
+        if selection and (row < 0 or all(item.row() != row for item in selection)):
+            row = selection[0].row()
         lane = self.session.lane(mode)
-        return lane.results[row] if 0 <= row < len(lane.results) else None
+        return lane.results[row] if selection and 0 <= row < len(lane.results) else None
 
     def _selected(self, mode):
         pane = self.panes[mode]
